@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rialo Chain Blaster</title>
-    <link rel="icon" type="image/png" href="logorlo.png">
+    <title>Rialo Chain Blaster</title>
     <style>
         /* General Setup */
         * {
@@ -46,7 +46,7 @@
         }
 
         .powered-by-text {
-            font-size: 34px;
+            font-size: 24px;
             color: #0f0;
             text-shadow: 0 0 8px #0f0;
             animation: text-flicker 1s linear infinite; /* Efek kelip aesthetic */
@@ -360,6 +360,27 @@
             transition: opacity 0.5s;
             z-index: 5;
         }
+
+        /* --- STYLE UNTUK LINK POWERED BY --- */
+        #poweredByLink {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #0f0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            text-decoration: none;
+            opacity: 0.6;
+            transition: all 0.3s ease;
+            z-index: 1; /* Pastikan tidak tertutup elemen lain */
+        }
+
+        #poweredByLink:hover {
+            opacity: 1;
+            text-shadow: 0 0 8px #0f0;
+        }
+
     </style>
 </head>
 <body>
@@ -427,6 +448,7 @@
             <p>Final Score: <span id="finalScore">0</span></p>
             <p>Rialo Tokens Earned: <span id="tokensEarned">0</span></p>
             <button id="restartButton">PLAY AGAIN</button>
+            <button id="exitButton">EXIT</button>
         </div>
 
         <div id="cryptoReward">
@@ -434,6 +456,8 @@
         </div>
     </div>
     
+    <a href="https://www.rialo.io/" target="_blank" id="poweredByLink">Powered by Rialo</a>
+
     <audio id="bgMusic" src="asteroid.mp3" loop></audio>
     <audio id="gameOverSound" src="gameover.mp3"></audio>
 
@@ -478,7 +502,6 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         
-        // --- PENAMBAHAN REFERENSI AUDIO ---
         const bgMusic = document.getElementById('bgMusic');
         const gameOverSound = document.getElementById('gameOverSound');
 
@@ -541,11 +564,19 @@
         function handleKeyUp(e) {
             if (keys.hasOwnProperty(e.key)) keys[e.key] = false;
         }
+        
+        // --- FUNGSI BARU UNTUK TOMBOL EXIT ---
+        function returnToStartMenu() {
+            document.getElementById('gameOver').classList.add('hidden');
+            document.getElementById('gameStart').classList.remove('hidden');
+        }
 
         // --- Game Initialization ---
         function initGame() {
             document.getElementById('startButton').addEventListener('click', startGame);
             document.getElementById('restartButton').addEventListener('click', startGame);
+            // --- PENAMBAHAN EVENT LISTENER UNTUK TOMBOL EXIT ---
+            document.getElementById('exitButton').addEventListener('click', returnToStartMenu);
             document.addEventListener('keydown', handleKeyDown);
             document.addEventListener('keyup', handleKeyUp);
             updateUI();
@@ -589,8 +620,7 @@
             lastTime = 0;
             updateUI();
             
-            // --- KODE UNTUK MEMUTAR MUSIK LATAR ---
-            bgMusic.currentTime = 0; // Mulai dari awal
+            bgMusic.currentTime = 0; 
             bgMusic.play();
             
             requestAnimationFrame(gameLoop);
@@ -1135,10 +1165,9 @@
         function gameOver() {
             gameActive = false;
             
-            // --- KODE UNTUK MENGATUR AUDIO SAAT GAME OVER ---
-            bgMusic.pause(); // Hentikan musik latar
-            gameOverSound.currentTime = 0; // Mulai dari awal
-            gameOverSound.play(); // Putar suara game over
+            bgMusic.pause(); 
+            gameOverSound.currentTime = 0; 
+            gameOverSound.play(); 
             
             const tokensEarned = Math.floor(score / 5000);
             document.getElementById('finalScore').textContent = score;
@@ -1147,6 +1176,4 @@
         }
     </script>
 </body>
-
 </html>
-
