@@ -253,6 +253,49 @@
             font-size: 16px;
             text-shadow: 0 0 5px #0f0;
         }
+        
+        /* --- NEW MENU: USERNAME --- */
+        #usernameMenu {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 10;
+             /* No box styling as requested */
+        }
+
+        #game-art {
+            max-width: 350px; /* Adjust size as needed */
+            margin-bottom: 25px;
+        }
+
+        input[type="text"] {
+            background-color: rgba(0,0,0,0.5);
+            color: #0f0;
+            border: 2px solid #0f0;
+            padding: 10px 15px;
+            font-size: 18px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            display: block;
+            margin: 0 auto 20px auto; /* Center and add margin below */
+            width: 80%;
+            max-width: 300px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        input[type="text"]::placeholder {
+            color: #0a0;
+            opacity: 0.7;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            box-shadow: 0 0 15px #0f0;
+        }
+
 
         #gameStart, #gameOver {
             position: absolute;
@@ -401,7 +444,7 @@
     <div id="gameContainer">
         <canvas id="gameCanvas" width="800" height="600"></canvas>
 
-        <div id="uiOverlay">
+        <div id="uiOverlay" class="hidden">
             <div id="topUI">
                 <div>SCORE: <span id="score">0</span></div>
                 <div>LEVEL: <span id="level">1</span></div>
@@ -425,7 +468,13 @@
             <div id="powerUpUI"></div>
         </div>
 
-        <div id="gameStart">
+        <div id="usernameMenu" class="hidden">
+            <img src="latar.png" alt="Rialo Game Art" id="game-art">
+            <input type="text" id="usernameInput" placeholder="Enter Username" maxlength="12">
+            <button id="enterUsernameButton">ENTER</button>
+        </div>
+
+        <div id="gameStart" class="hidden">
             <h1>
                 <img src="logorlo.png" alt="Rialo Logo" class="h1-logo">
                 RIALO
@@ -486,11 +535,13 @@
             setTimeout(() => {
                 splashScreen.classList.add('hidden');
                 
-                // 4. After the logo screen fades, show the game
+                // 4. After the logo screen fades, show the game container and username menu
                 splashScreen.addEventListener('transitionend', () => {
                     preSplash.style.display = 'none';
                     splashScreen.style.display = 'none';
                     gameContainer.classList.add('visible');
+                    // MODIFIED: Show username menu first
+                    document.getElementById('usernameMenu').classList.remove('hidden');
                     initGame();
                 }, { once: true });
 
@@ -515,6 +566,7 @@
         let power = 100;
         let asteroidsDestroyedThisLevel = 0;
         let asteroidsNeededForNextLevel = 10;
+        let username = 'Player';
 
         // --- Game Objects ---
         let asteroids = [];
@@ -573,13 +625,21 @@
 
         // --- Game Initialization ---
         function initGame() {
+            // NEW: Event listener for username submission
+            document.getElementById('enterUsernameButton').addEventListener('click', () => {
+                const input = document.getElementById('usernameInput');
+                if (input.value.trim() !== '') {
+                    username = input.value.trim();
+                }
+                document.getElementById('usernameMenu').classList.add('hidden');
+                document.getElementById('gameStart').classList.remove('hidden');
+            });
+
             document.getElementById('startButton').addEventListener('click', startGame);
             document.getElementById('restartButton').addEventListener('click', startGame);
-            // --- PENAMBAHAN EVENT LISTENER UNTUK TOMBOL EXIT ---
             document.getElementById('exitButton').addEventListener('click', returnToStartMenu);
             document.addEventListener('keydown', handleKeyDown);
             document.addEventListener('keyup', handleKeyUp);
-            updateUI();
         }
 
         // --- Game Start/Reset ---
@@ -616,6 +676,9 @@
 
             document.getElementById('gameStart').classList.add('hidden');
             document.getElementById('gameOver').classList.add('hidden');
+            
+            // Show the in-game UI
+            document.getElementById('uiOverlay').classList.remove('hidden');
 
             lastTime = 0;
             updateUI();
@@ -767,11 +830,26 @@
         }
 
         function updateEnemies() {
+            // --- PERUBAHAN DIMULAI ---
+            // Menambahkan jarak minimal agar musuh tidak menempel
+            const MIN_DISTANCE_FROM_PLAYER = 120; 
+
             for (let i = enemyShips.length - 1; i >= 0; i--) {
                 const enemy = enemyShips[i];
-                enemy.angle = Math.atan2(player.y - enemy.y, player.x - enemy.x);
-                enemy.x += Math.cos(enemy.angle) * enemy.speed;
-                enemy.y += Math.sin(enemy.angle) * enemy.speed;
+                
+                // Hitung jarak ke pemain
+                const dx = player.x - enemy.x;
+                const dy = player.y - enemy.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                // Musuh akan selalu mengarah ke pemain
+                enemy.angle = Math.atan2(dy, dx);
+                
+                // Hanya bergerak jika di luar jarak aman
+                if (distance > MIN_DISTANCE_FROM_PLAYER) {
+                    enemy.x += Math.cos(enemy.angle) * enemy.speed;
+                    enemy.y += Math.sin(enemy.angle) * enemy.speed;
+                }
 
                 const now = Date.now();
                 if (now - enemy.lastShot > enemy.shootDelay) {
@@ -782,6 +860,7 @@
                     });
                 }
             }
+            // --- PERUBAHAN SELESAI ---
         }
 
         function updateParticles() {
@@ -812,11 +891,17 @@
                             createPowerUp(asteroid.x, asteroid.y);
                         }
 
+                        // --- PERUBAHAN DIMULAI ---
+                        // Kode untuk memecah asteroid dinonaktifkan
+                        /*
                         if (asteroid.size > 20) {
                             for (let k = 0; k < 2; k++) {
                                 asteroids.push(createSubAsteroid(asteroid, k));
                             }
                         }
+                        */
+                       // --- PERUBAHAN SELESAI ---
+
                         asteroids.splice(j, 1);
                         asteroidsDestroyedThisLevel++;
                         score += 100 * multiplier;
@@ -1164,6 +1249,9 @@
 
         function gameOver() {
             gameActive = false;
+
+            // Hide the in-game UI
+            document.getElementById('uiOverlay').classList.add('hidden');
             
             bgMusic.pause(); 
             gameOverSound.currentTime = 0; 
@@ -1177,4 +1265,3 @@
     </script>
 </body>
 </html>
-
