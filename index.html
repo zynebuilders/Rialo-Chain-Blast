@@ -553,6 +553,20 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         
+        // KODE BARU: Muat semua gambar yang dibutuhkan
+        const playerImage = new Image();
+        playerImage.src = 'jet.png';
+
+        const bigAsteroidImage = new Image();
+        bigAsteroidImage.src = 'big.png';
+
+        const smallAsteroidImage = new Image();
+        smallAsteroidImage.src = 'small.png';
+        
+        // KODE BARU: Muat gambar musuh
+        const enemyImage = new Image();
+        enemyImage.src = 'musuh.png';
+        
         const bgMusic = document.getElementById('bgMusic');
         const gameOverSound = document.getElementById('gameOverSound');
 
@@ -589,7 +603,7 @@
             x: canvas.width / 2,
             y: canvas.height / 2,
             size: PLAYER_SETTINGS.size,
-            angle: -Math.PI / 2,
+            angle: -Math.PI / 2, // Arah awal ke atas
             velocity: { x: 0, y: 0 },
             bullets: [],
             lastShot: 0,
@@ -802,10 +816,9 @@
             for (let i = bulletArray.length - 1; i >= 0; i--) {
                 const bullet = bulletArray[i];
 
-                // --- PERUBAHAN: Cek waktu hidup peluru ---
                 if (now - bullet.createdAt > 5000) {
                     bulletArray.splice(i, 1);
-                    continue; // Lanjut ke peluru berikutnya
+                    continue;
                 }
 
                 bullet.x += Math.cos(bullet.angle) * bullet.speed;
@@ -838,21 +851,17 @@
         }
 
         function updateEnemies() {
-            // Menambahkan jarak minimal agar musuh tidak menempel
             const MIN_DISTANCE_FROM_PLAYER = 120; 
 
             for (let i = enemyShips.length - 1; i >= 0; i--) {
                 const enemy = enemyShips[i];
                 
-                // Hitung jarak ke pemain
                 const dx = player.x - enemy.x;
                 const dy = player.y - enemy.y;
                 const distance = Math.sqrt(dx * dx + dy * dy);
 
-                // Musuh akan selalu mengarah ke pemain
                 enemy.angle = Math.atan2(dy, dx);
                 
-                // Hanya bergerak jika di luar jarak aman
                 if (distance > MIN_DISTANCE_FROM_PLAYER) {
                     enemy.x += Math.cos(enemy.angle) * enemy.speed;
                     enemy.y += Math.sin(enemy.angle) * enemy.speed;
@@ -861,7 +870,6 @@
                 const now = Date.now();
                 if (now - enemy.lastShot > enemy.shootDelay) {
                     enemy.lastShot = now;
-                    // --- PERUBAHAN: Tambahkan createdAt saat peluru dibuat ---
                     enemyBullets.push({
                         x: enemy.x, y: enemy.y,
                         angle: enemy.angle, speed: 5, size: 3,
@@ -882,16 +890,14 @@
         }
 
         function checkCollisions() {
-            // Player bullets vs Asteroids & Enemies
             for (let i = player.bullets.length - 1; i >= 0; i--) {
                 const bullet = player.bullets[i];
                 let bulletRemoved = false;
 
-                // vs Asteroids
                 for (let j = asteroids.length - 1; j >= 0; j--) {
                     const asteroid = asteroids[j];
                     if (isColliding(bullet, asteroid)) {
-                        createExplosion(asteroid.x, asteroid.y, asteroid.size, '#a0f');
+                        createExplosion(asteroid.x, asteroid.y, asteroid.size, '#f90');
                         player.bullets.splice(i, 1);
                         bulletRemoved = true;
                         
@@ -899,16 +905,16 @@
                             createPowerUp(asteroid.x, asteroid.y);
                         }
 
-                        // MODIFIED: If the asteroid is large, split it into 3 smaller pieces
-                        if (asteroid.size > 35) {
+                        // MODIFIED: Cek jika asteroid yang hancur adalah asteroid besar
+                        if (asteroid.imageObject === bigAsteroidImage) {
                             for (let k = 0; k < 3; k++) {
                                 asteroids.push({
                                     x: asteroid.x,
                                     y: asteroid.y,
-                                    size: asteroid.size / 2.5,
+                                    size: asteroid.size / 2.5, // Ukuran lebih kecil
                                     speed: asteroid.speed * 1.4,
-                                    angle: asteroid.angle + (k - 1) * 0.8, // Spread them out
-                                    vertices: Math.floor(Math.random() * 3) + 5,
+                                    angle: asteroid.angle + (k - 1) * 0.8,
+                                    imageObject: smallAsteroidImage, // Gunakan gambar asteroid kecil
                                     rotation: 0,
                                     rotationSpeed: (Math.random() - 0.5) * 0.03
                                 });
@@ -924,7 +930,6 @@
                 
                 if (bulletRemoved) continue;
 
-                // vs Enemies
                 for (let j = enemyShips.length - 1; j >= 0; j--) {
                     const enemy = enemyShips[j];
                     if (isColliding(bullet, enemy)) {
@@ -941,11 +946,10 @@
             }
             
             if (!player.isInvincible) {
-                // Player vs Asteroids
                 for (let i = asteroids.length - 1; i >= 0; i--) {
                     const asteroid = asteroids[i];
                     if (isColliding(player, asteroid)) {
-                        createExplosion(asteroid.x, asteroid.y, asteroid.size, '#a0f');
+                        createExplosion(asteroid.x, asteroid.y, asteroid.size, '#f90');
                         health -= 15;
                         asteroids.splice(i, 1);
                         player.isInvincible = true;
@@ -953,7 +957,6 @@
                         break; 
                     }
                 }
-                // Player vs Enemy Bullets
                 for (let i = enemyBullets.length - 1; i >= 0; i--) {
                     const bullet = enemyBullets[i];
                     if (isColliding(player, bullet)) {
@@ -967,7 +970,6 @@
                 }
             }
             
-            // Player vs Power-ups
             for (let i = powerUps.length - 1; i >= 0; i--) {
                 const p = powerUps[i];
                 if (isColliding(player, p)) {
@@ -988,7 +990,18 @@
 
         // --- Creation Functions ---
         function createAsteroid() {
-            const size = Math.random() * 30 + 20;
+            let size;
+            let imageObject;
+
+            // Tentukan secara acak apakah asteroid besar atau kecil
+            if (Math.random() > 0.4) { // 60% kemungkinan asteroid besar
+                size = Math.random() * 20 + 40; // Ukuran 40 - 60
+                imageObject = bigAsteroidImage;
+            } else { // 40% kemungkinan asteroid kecil
+                size = Math.random() * 15 + 20; // Ukuran 20 - 35
+                imageObject = smallAsteroidImage;
+            }
+            
             let x, y;
             if (Math.random() < 0.5) {
                 x = Math.random() < 0.5 ? -size : canvas.width + size;
@@ -999,10 +1012,9 @@
             }
 
             asteroids.push({
-                x, y, size,
+                x, y, size, imageObject,
                 speed: Math.random() * 1 + 0.5,
                 angle: Math.random() * Math.PI * 2,
-                vertices: Math.floor(Math.random() * 4) + 6,
                 rotation: 0,
                 rotationSpeed: (Math.random() - 0.5) * 0.02
             });
@@ -1012,18 +1024,6 @@
             const types = ['rapid-fire', 'triple-shot'];
             const type = types[Math.floor(Math.random() * types.length)];
             powerUps.push({ x, y, type, size: 12, life: 10 });
-        }
-
-        function createSubAsteroid(parent, index) {
-            return {
-                x: parent.x, y: parent.y,
-                size: parent.size / 2,
-                speed: parent.speed * 1.5,
-                angle: parent.angle + (Math.PI / 2) * (index === 0 ? 1 : -1),
-                vertices: Math.floor(Math.random() * 3) + 5,
-                rotation: 0,
-                rotationSpeed: (Math.random() - 0.5) * 0.03
-            };
         }
 
         function createEnemyShip() {
@@ -1070,27 +1070,23 @@
 
             ctx.save();
             ctx.translate(player.x, player.y);
-            ctx.rotate(player.angle);
-            ctx.strokeStyle = '#0f0';
-            ctx.lineWidth = 2;
-            ctx.shadowBlur = 10;
-            ctx.shadowColor = '#0f0';
-            ctx.beginPath();
-            ctx.moveTo(player.size, 0);
-            ctx.lineTo(-player.size * 0.8, -player.size * 0.7);
-            ctx.lineTo(-player.size * 0.8, player.size * 0.7);
-            ctx.closePath();
-            ctx.stroke();
+            // Tambahkan Math.PI / 2 untuk menyesuaikan rotasi gambar jet yang menghadap ke atas
+            ctx.rotate(player.angle + Math.PI / 2);
 
+            const playerWidth = player.size * 2.5;
+            const playerHeight = player.size * 2.5;
+            ctx.drawImage(playerImage, -playerWidth / 2, -playerHeight / 2, playerWidth, playerHeight);
+
+            // Gambar api pendorong jika bergerak
             if (player.isBoosting || (keys.w || keys.ArrowUp)) {
                 const flameColor = player.isBoosting ? '#ff0' : '#f90';
-                ctx.strokeStyle = flameColor;
+                ctx.fillStyle = flameColor;
                 ctx.shadowColor = flameColor;
-                ctx.lineWidth = 3;
-                ctx.beginPath();
-                ctx.moveTo(-player.size * 0.8, 0);
-                ctx.lineTo(-player.size * (1 + Math.random() * 0.5), 0);
-                ctx.stroke();
+                ctx.shadowBlur = 15;
+                // Posisi api disesuaikan dengan gambar jet
+                const flameWidth = player.size * 0.5;
+                const flameHeight = player.size * (1 + Math.random() * 0.5);
+                ctx.fillRect(-flameWidth / 2, playerHeight / 2 - 5, flameWidth, flameHeight);
             }
             ctx.restore();
         }
@@ -1100,20 +1096,11 @@
                 ctx.save();
                 ctx.translate(asteroid.x, asteroid.y);
                 ctx.rotate(asteroid.rotation);
-                ctx.strokeStyle = '#a0f';
-                ctx.lineWidth = 2;
-                ctx.shadowBlur = 15;
-                ctx.shadowColor = '#a0f';
-                ctx.beginPath();
-                for (let i = 0; i < asteroid.vertices; i++) {
-                    const angle = (i / asteroid.vertices) * Math.PI * 2;
-                    const radius = asteroid.size + Math.sin(angle * 5 + asteroid.rotation) * 4;
-                    const x = Math.cos(angle) * radius;
-                    const y = Math.sin(angle) * radius;
-                    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-                }
-                ctx.closePath();
-                ctx.stroke();
+                
+                const asteroidDiameter = asteroid.size * 2;
+                // Gambar asteroid yang sesuai (besar atau kecil)
+                ctx.drawImage(asteroid.imageObject, -asteroid.size, -asteroid.size, asteroidDiameter, asteroidDiameter);
+                
                 ctx.restore();
             });
         }
@@ -1152,18 +1139,15 @@
             enemyShips.forEach(enemy => {
                 ctx.save();
                 ctx.translate(enemy.x, enemy.y);
-                ctx.rotate(enemy.angle);
-                ctx.strokeStyle = '#f00';
-                ctx.lineWidth = 2;
-                ctx.shadowBlur = 10;
-                ctx.shadowColor = '#f00';
-                ctx.beginPath();
-                ctx.moveTo(enemy.size, 0);
-                ctx.lineTo(-enemy.size, -enemy.size * 0.8);
-                ctx.lineTo(-enemy.size / 2, 0);
-                ctx.lineTo(-enemy.size, enemy.size * 0.8);
-                ctx.closePath();
-                ctx.stroke();
+                // KODE BARU: Tambahkan Math.PI / 2 agar gambar musuh menghadap ke arah yang benar
+                ctx.rotate(enemy.angle + Math.PI / 2);
+
+                const enemyWidth = enemy.size * 3.5; // Ukuran bisa disesuaikan agar pas
+                const enemyHeight = enemy.size * 3.5;
+                
+                // KODE BARU: Menggambar gambar musuh, bukan lagi bentuk geometris
+                ctx.drawImage(enemyImage, -enemyWidth / 2, -enemyHeight / 2, enemyWidth, enemyHeight);
+                
                 ctx.restore();
             });
         }
@@ -1204,7 +1188,7 @@
                     x: player.x + Math.cos(player.angle) * player.size,
                     y: player.y + Math.sin(player.angle) * player.size,
                     speed: 10, size: 3,
-                    createdAt: Date.now() // --- PERUBAHAN: Tambahkan createdAt saat peluru dibuat ---
+                    createdAt: Date.now()
                 };
 
                 if (player.activePowerUp === 'triple-shot') {
