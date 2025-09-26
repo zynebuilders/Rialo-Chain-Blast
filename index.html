@@ -888,7 +888,8 @@
                 if (p.life <= 0) particles.splice(i, 1);
             }
         }
-
+        
+        // --- MODIFIED FUNCTION 1 of 2 ---
         function checkCollisions() {
             for (let i = player.bullets.length - 1; i >= 0; i--) {
                 const bullet = player.bullets[i];
@@ -905,16 +906,15 @@
                             createPowerUp(asteroid.x, asteroid.y);
                         }
 
-                        // MODIFIED: Cek jika asteroid yang hancur adalah asteroid besar
                         if (asteroid.imageObject === bigAsteroidImage) {
                             for (let k = 0; k < 3; k++) {
                                 asteroids.push({
                                     x: asteroid.x,
                                     y: asteroid.y,
-                                    size: asteroid.size / 2.5, // Ukuran lebih kecil
+                                    size: asteroid.size / 2.5,
                                     speed: asteroid.speed * 1.4,
                                     angle: asteroid.angle + (k - 1) * 0.8,
-                                    imageObject: smallAsteroidImage, // Gunakan gambar asteroid kecil
+                                    imageObject: smallAsteroidImage,
                                     rotation: 0,
                                     rotationSpeed: (Math.random() - 0.5) * 0.03
                                 });
@@ -934,13 +934,13 @@
                     const enemy = enemyShips[j];
                     if (isColliding(bullet, enemy)) {
                         player.bullets.splice(i, 1);
-                        enemy.health--;
-                        if (enemy.health <= 0) {
-                            createExplosion(enemy.x, enemy.y, enemy.size, '#f00');
-                            enemyShips.splice(j, 1);
-                            score += 250 * multiplier;
-                        }
-                        break;
+                        
+                        // Enemy is destroyed in one hit, no health check needed
+                        createExplosion(enemy.x, enemy.y, enemy.size, '#f00');
+                        enemyShips.splice(j, 1);
+                        score += 250 * multiplier;
+                        
+                        break; // Exit loop since the bullet is used and the enemy is gone
                     }
                 }
             }
@@ -983,8 +983,8 @@
             const dx = obj1.x - obj2.x;
             const dy = obj1.y - obj2.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
-            const size1 = obj1.size || 3;
-            const size2 = obj2.size || 3;
+            const size1 = obj1.collisionRadius || obj1.size || 3;
+            const size2 = obj2.collisionRadius || obj2.size || 3;
             return distance < size1 + size2;
         }
 
@@ -993,12 +993,11 @@
             let size;
             let imageObject;
 
-            // Tentukan secara acak apakah asteroid besar atau kecil
-            if (Math.random() > 0.4) { // 60% kemungkinan asteroid besar
-                size = Math.random() * 20 + 40; // Ukuran 40 - 60
+            if (Math.random() > 0.4) { 
+                size = Math.random() * 20 + 40; 
                 imageObject = bigAsteroidImage;
-            } else { // 40% kemungkinan asteroid kecil
-                size = Math.random() * 15 + 20; // Ukuran 20 - 35
+            } else { 
+                size = Math.random() * 15 + 20; 
                 imageObject = smallAsteroidImage;
             }
             
@@ -1025,7 +1024,8 @@
             const type = types[Math.floor(Math.random() * types.length)];
             powerUps.push({ x, y, type, size: 12, life: 10 });
         }
-
+        
+        // --- MODIFIED FUNCTION 2 of 2 ---
         function createEnemyShip() {
             const size = 15;
             let x, y;
@@ -1038,9 +1038,10 @@
             }
             enemyShips.push({
                 x, y, size,
+                collisionRadius: 25, 
                 speed: Math.random() * 1.5 + 0.5,
                 angle: 0,
-                health: 3,
+                // health: 3, // This line is removed
                 lastShot: 0,
                 shootDelay: 1500 - (level * 50)
             });
@@ -1070,20 +1071,17 @@
 
             ctx.save();
             ctx.translate(player.x, player.y);
-            // Tambahkan Math.PI / 2 untuk menyesuaikan rotasi gambar jet yang menghadap ke atas
             ctx.rotate(player.angle + Math.PI / 2);
 
             const playerWidth = player.size * 2.5;
             const playerHeight = player.size * 2.5;
             ctx.drawImage(playerImage, -playerWidth / 2, -playerHeight / 2, playerWidth, playerHeight);
 
-            // Gambar api pendorong jika bergerak
             if (player.isBoosting || (keys.w || keys.ArrowUp)) {
                 const flameColor = player.isBoosting ? '#ff0' : '#f90';
                 ctx.fillStyle = flameColor;
                 ctx.shadowColor = flameColor;
                 ctx.shadowBlur = 15;
-                // Posisi api disesuaikan dengan gambar jet
                 const flameWidth = player.size * 0.5;
                 const flameHeight = player.size * (1 + Math.random() * 0.5);
                 ctx.fillRect(-flameWidth / 2, playerHeight / 2 - 5, flameWidth, flameHeight);
@@ -1098,7 +1096,6 @@
                 ctx.rotate(asteroid.rotation);
                 
                 const asteroidDiameter = asteroid.size * 2;
-                // Gambar asteroid yang sesuai (besar atau kecil)
                 ctx.drawImage(asteroid.imageObject, -asteroid.size, -asteroid.size, asteroidDiameter, asteroidDiameter);
                 
                 ctx.restore();
@@ -1139,13 +1136,11 @@
             enemyShips.forEach(enemy => {
                 ctx.save();
                 ctx.translate(enemy.x, enemy.y);
-                // KODE BARU: Tambahkan Math.PI / 2 agar gambar musuh menghadap ke arah yang benar
                 ctx.rotate(enemy.angle + Math.PI / 2);
 
-                const enemyWidth = enemy.size * 3.5; // Ukuran bisa disesuaikan agar pas
+                const enemyWidth = enemy.size * 3.5; 
                 const enemyHeight = enemy.size * 3.5;
                 
-                // KODE BARU: Menggambar gambar musuh, bukan lagi bentuk geometris
                 ctx.drawImage(enemyImage, -enemyWidth / 2, -enemyHeight / 2, enemyWidth, enemyHeight);
                 
                 ctx.restore();
