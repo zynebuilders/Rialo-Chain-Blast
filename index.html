@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF--8">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rialo Chain Blaster</title>
     <link rel="icon" type="image/png" href="logorlo.png">
@@ -553,7 +553,7 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         
-        // KODE BARU: Muat semua gambar yang dibutuhkan
+        // Muat semua gambar yang dibutuhkan
         const playerImage = new Image();
         playerImage.src = 'jet.png';
 
@@ -563,10 +563,13 @@
         const smallAsteroidImage = new Image();
         smallAsteroidImage.src = 'small.png';
         
-        // KODE BARU: Muat gambar musuh
         const enemyImage = new Image();
         enemyImage.src = 'musuh.png';
         
+        // --- KODE BARU: Muat gambar item Ultimatum ---
+        const ultimatumImage = new Image();
+        ultimatumImage.src = 'item.png'; // Pastikan nama file ini sesuai dengan file yang Anda unggah
+
         const bgMusic = document.getElementById('bgMusic');
         const gameOverSound = document.getElementById('gameOverSound');
 
@@ -631,7 +634,6 @@
             if (keys.hasOwnProperty(e.key)) keys[e.key] = false;
         }
         
-        // --- FUNGSI BARU UNTUK TOMBOL EXIT ---
         function returnToStartMenu() {
             document.getElementById('gameOver').classList.add('hidden');
             document.getElementById('gameStart').classList.remove('hidden');
@@ -639,7 +641,6 @@
 
         // --- Game Initialization ---
         function initGame() {
-            // NEW: Event listener for username submission
             document.getElementById('enterUsernameButton').addEventListener('click', () => {
                 const input = document.getElementById('usernameInput');
                 if (input.value.trim() !== '') {
@@ -690,8 +691,6 @@
 
             document.getElementById('gameStart').classList.add('hidden');
             document.getElementById('gameOver').classList.add('hidden');
-            
-            // Show the in-game UI
             document.getElementById('uiOverlay').classList.remove('hidden');
 
             lastTime = 0;
@@ -889,7 +888,6 @@
             }
         }
         
-        // --- MODIFIED FUNCTION 1 of 2 ---
         function checkCollisions() {
             for (let i = player.bullets.length - 1; i >= 0; i--) {
                 const bullet = player.bullets[i];
@@ -902,7 +900,7 @@
                         player.bullets.splice(i, 1);
                         bulletRemoved = true;
                         
-                        if (Math.random() < 0.2) {
+                        if (Math.random() < 0.15) {
                             createPowerUp(asteroid.x, asteroid.y);
                         }
 
@@ -934,13 +932,10 @@
                     const enemy = enemyShips[j];
                     if (isColliding(bullet, enemy)) {
                         player.bullets.splice(i, 1);
-                        
-                        // Enemy is destroyed in one hit, no health check needed
                         createExplosion(enemy.x, enemy.y, enemy.size, '#f00');
                         enemyShips.splice(j, 1);
                         score += 250 * multiplier;
-                        
-                        break; // Exit loop since the bullet is used and the enemy is gone
+                        break;
                     }
                 }
             }
@@ -1019,13 +1014,37 @@
             });
         }
         
+        // --- FUNGSI DIPERBAIKI: Mencegah item sejenis muncul berdempetan ---
         function createPowerUp(x, y) {
-            const types = ['rapid-fire', 'triple-shot'];
-            const type = types[Math.floor(Math.random() * types.length)];
-            powerUps.push({ x, y, type, size: 12, life: 10 });
+            let type;
+            const rand = Math.random(); 
+
+            if (rand < 0.15) {
+                type = 'ultimatum';
+            } else if (rand < 0.35) {
+                type = 'triple-shot';
+            } else {
+                type = 'rapid-fire';
+            }
+
+            // --- KODE BARU: Cek jarak dengan item sejenis yang sudah ada ---
+            const MIN_DISTANCE_BETWEEN_SAME_POWERUPS = 100; // Jarak minimal dalam piksel
+            for (const existingPowerUp of powerUps) {
+                if (existingPowerUp.type === type) {
+                    const dx = x - existingPowerUp.x;
+                    const dy = y - existingPowerUp.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    if (distance < MIN_DISTANCE_BETWEEN_SAME_POWERUPS) {
+                        return; // Batalkan pembuatan power-up jika terlalu dekat dengan yang sejenis
+                    }
+                }
+            }
+            // --- AKHIR KODE BARU ---
+            
+            const itemSize = (type === 'ultimatum') ? 20 : 12;
+            powerUps.push({ x, y, type, size: itemSize, life: 10 });
         }
         
-        // --- MODIFIED FUNCTION 2 of 2 ---
         function createEnemyShip() {
             const size = 15;
             let x, y;
@@ -1041,7 +1060,6 @@
                 collisionRadius: 25, 
                 speed: Math.random() * 1.5 + 0.5,
                 angle: 0,
-                // health: 3, // This line is removed
                 lastShot: 0,
                 shootDelay: 1500 - (level * 50)
             });
@@ -1107,27 +1125,38 @@
                 ctx.save();
                 ctx.translate(p.x, p.y);
                 ctx.globalAlpha = p.life / 10;
-                ctx.font = 'bold 14px Courier New';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-
-                let text = '';
-                if (p.type === 'rapid-fire') {
-                    ctx.fillStyle = '#ff0';
-                    text = 'RF';
-                } else if (p.type === 'triple-shot') {
-                    ctx.fillStyle = '#0ff';
-                    text = 'TS';
-                }
-                ctx.shadowColor = ctx.fillStyle;
-                ctx.shadowBlur = 15;
-                ctx.fillText(text, 0, 0);
                 
-                ctx.strokeStyle = ctx.fillStyle;
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.arc(0, 0, p.size, 0, Math.PI * 2);
-                ctx.stroke();
+                if (p.type === 'ultimatum') {
+                    const pulse = Math.sin(Date.now() / 250);
+                    const glowSize = 15 + (pulse * 5);
+                    ctx.shadowColor = '#0ff';
+                    ctx.shadowBlur = glowSize;
+                    
+                    const itemDiameter = p.size * 2.5; 
+                    ctx.drawImage(ultimatumImage, -itemDiameter / 2, -itemDiameter / 2, itemDiameter, itemDiameter);
+
+                } else {
+                    ctx.font = 'bold 14px Courier New';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    let text = '';
+                    if (p.type === 'rapid-fire') {
+                        ctx.fillStyle = '#ff0';
+                        text = 'RF';
+                    } else if (p.type === 'triple-shot') {
+                        ctx.fillStyle = '#0ff';
+                        text = 'TS';
+                    }
+                    ctx.shadowColor = ctx.fillStyle;
+                    ctx.shadowBlur = 15;
+                    ctx.fillText(text, 0, 0);
+                    
+                    ctx.strokeStyle = ctx.fillStyle;
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, p.size, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
                 ctx.restore();
             });
         }
@@ -1196,8 +1225,30 @@
             }
         }
         
+        function activateUltimatum() {
+            for (let i = asteroids.length - 1; i >= 0; i--) {
+                const asteroid = asteroids[i];
+                createExplosion(asteroid.x, asteroid.y, asteroid.size, '#8a2be2');
+                score += 100 * multiplier;
+            }
+            asteroids = [];
+
+            for (let i = enemyShips.length - 1; i >= 0; i--) {
+                const enemy = enemyShips[i];
+                createExplosion(enemy.x, enemy.y, enemy.size, '#00ffff');
+                score += 250 * multiplier;
+            }
+            enemyShips = [];
+        }
+
         function activatePowerUp(type) {
             deactivatePowerUp();
+
+            if (type === 'ultimatum') {
+                activateUltimatum();
+                return;
+            }
+            
             player.activePowerUp = type;
             player.powerUpTimer = 10;
 
@@ -1248,8 +1299,6 @@
 
         function gameOver() {
             gameActive = false;
-
-            // Hide the in-game UI
             document.getElementById('uiOverlay').classList.add('hidden');
             
             bgMusic.pause(); 
