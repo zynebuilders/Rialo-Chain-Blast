@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF--8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rialo Chain Blaster</title>
     <link rel="icon" type="image/png" href="logorlo.png">
@@ -798,8 +798,16 @@
         }
 
         function updateBullets(bulletArray, color, shouldWrap) {
+            const now = Date.now();
             for (let i = bulletArray.length - 1; i >= 0; i--) {
                 const bullet = bulletArray[i];
+
+                // --- PERUBAHAN: Cek waktu hidup peluru ---
+                if (now - bullet.createdAt > 5000) {
+                    bulletArray.splice(i, 1);
+                    continue; // Lanjut ke peluru berikutnya
+                }
+
                 bullet.x += Math.cos(bullet.angle) * bullet.speed;
                 bullet.y += Math.sin(bullet.angle) * bullet.speed;
 
@@ -830,7 +838,6 @@
         }
 
         function updateEnemies() {
-            // --- PERUBAHAN DIMULAI ---
             // Menambahkan jarak minimal agar musuh tidak menempel
             const MIN_DISTANCE_FROM_PLAYER = 120; 
 
@@ -854,13 +861,14 @@
                 const now = Date.now();
                 if (now - enemy.lastShot > enemy.shootDelay) {
                     enemy.lastShot = now;
+                    // --- PERUBAHAN: Tambahkan createdAt saat peluru dibuat ---
                     enemyBullets.push({
                         x: enemy.x, y: enemy.y,
-                        angle: enemy.angle, speed: 5, size: 3
+                        angle: enemy.angle, speed: 5, size: 3,
+                        createdAt: Date.now()
                     });
                 }
             }
-            // --- PERUBAHAN SELESAI ---
         }
 
         function updateParticles() {
@@ -891,16 +899,21 @@
                             createPowerUp(asteroid.x, asteroid.y);
                         }
 
-                        // --- PERUBAHAN DIMULAI ---
-                        // Kode untuk memecah asteroid dinonaktifkan
-                        /*
-                        if (asteroid.size > 20) {
-                            for (let k = 0; k < 2; k++) {
-                                asteroids.push(createSubAsteroid(asteroid, k));
+                        // MODIFIED: If the asteroid is large, split it into 3 smaller pieces
+                        if (asteroid.size > 35) {
+                            for (let k = 0; k < 3; k++) {
+                                asteroids.push({
+                                    x: asteroid.x,
+                                    y: asteroid.y,
+                                    size: asteroid.size / 2.5,
+                                    speed: asteroid.speed * 1.4,
+                                    angle: asteroid.angle + (k - 1) * 0.8, // Spread them out
+                                    vertices: Math.floor(Math.random() * 3) + 5,
+                                    rotation: 0,
+                                    rotationSpeed: (Math.random() - 0.5) * 0.03
+                                });
                             }
                         }
-                        */
-                       // --- PERUBAHAN SELESAI ---
 
                         asteroids.splice(j, 1);
                         asteroidsDestroyedThisLevel++;
@@ -1187,12 +1200,19 @@
             if (now - player.lastShot > PLAYER_SETTINGS.shootDelay) {
                 player.lastShot = now;
 
+                const baseBullet = {
+                    x: player.x + Math.cos(player.angle) * player.size,
+                    y: player.y + Math.sin(player.angle) * player.size,
+                    speed: 10, size: 3,
+                    createdAt: Date.now() // --- PERUBAHAN: Tambahkan createdAt saat peluru dibuat ---
+                };
+
                 if (player.activePowerUp === 'triple-shot') {
-                    player.bullets.push({ x: player.x + Math.cos(player.angle) * player.size, y: player.y + Math.sin(player.angle) * player.size, angle: player.angle, speed: 10, size: 3 });
-                    player.bullets.push({ x: player.x + Math.cos(player.angle) * player.size, y: player.y + Math.sin(player.angle) * player.size, angle: player.angle - 0.2, speed: 10, size: 3 });
-                    player.bullets.push({ x: player.x + Math.cos(player.angle) * player.size, y: player.y + Math.sin(player.angle) * player.size, angle: player.angle + 0.2, speed: 10, size: 3 });
+                    player.bullets.push({ ...baseBullet, angle: player.angle });
+                    player.bullets.push({ ...baseBullet, angle: player.angle - 0.2 });
+                    player.bullets.push({ ...baseBullet, angle: player.angle + 0.2 });
                 } else {
-                    player.bullets.push({ x: player.x + Math.cos(player.angle) * player.size, y: player.y + Math.sin(player.angle) * player.size, angle: player.angle, speed: 10, size: 3 });
+                    player.bullets.push({ ...baseBullet, angle: player.angle });
                 }
             }
         }
