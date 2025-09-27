@@ -185,6 +185,42 @@
             font-size: 18px;
             text-shadow: 0 0 5px #0f0;
         }
+        
+        /* --- NEW: BOSS UI --- */
+        #bossUIContainer {
+            position: absolute;
+            top: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60%;
+            text-align: center;
+            color: #c000ff; /* Neon Purple */
+        }
+        
+        #bossUIContainer p {
+            font-size: 18px;
+            margin-bottom: 5px;
+            text-shadow: 0 0 8px #c000ff;
+            font-weight: bold;
+        }
+        
+        .bossHealthBar {
+            width: 100%;
+            height: 20px;
+            border: 2px solid #9400d3;
+            border-radius: 5px;
+            overflow: hidden;
+            background-color: rgba(50, 0, 80, 0.5);
+        }
+        
+        #bossHealthFill {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to right, #6a0dad, #c000ff);
+            box-shadow: 0 0 10px #c000ff;
+            transition: width 0.3s ease-in-out;
+        }
+        /* --- END: BOSS UI --- */
 
         .uiBarContainer {
             position: absolute;
@@ -450,6 +486,13 @@
                 <div>LEVEL: <span id="level">1</span></div>
                 <div>MULTIPLIER: <span id="multiplier">x1</span></div>
             </div>
+            
+            <div id="bossUIContainer" class="hidden">
+                <p>VOID COMMANDER</p>
+                <div class="bossHealthBar">
+                    <div id="bossHealthFill"></div>
+                </div>
+            </div>
 
             <div id="healthContainer" class="uiBarContainer">
                 <p>HP</p>
@@ -566,9 +609,15 @@
         const enemyImage = new Image();
         enemyImage.src = 'musuh.png';
         
-        // --- KODE BARU: Muat gambar item Ultimatum ---
         const ultimatumImage = new Image();
-        ultimatumImage.src = 'item.png'; // Pastikan nama file ini sesuai dengan file yang Anda unggah
+        ultimatumImage.src = 'item.png';
+
+        const bossImage = new Image();
+        bossImage.src = 'bos.png';
+
+        // --- NEW: Load Health Boost Image ---
+        const heartImage = new Image();
+        heartImage.src = 'heart.png'; // Pastikan Anda punya file 'heart.png'
 
         const bgMusic = document.getElementById('bgMusic');
         const gameOverSound = document.getElementById('gameOverSound');
@@ -584,6 +633,9 @@
         let asteroidsDestroyedThisLevel = 0;
         let asteroidsNeededForNextLevel = 10;
         let username = 'Player';
+        let isBossLevel = false;
+        let boss = null;
+        let bossesDefeated = 0; // MODIFIED: Menghitung bos yang dikalahkan
 
         // --- Game Objects ---
         let asteroids = [];
@@ -606,7 +658,7 @@
             x: canvas.width / 2,
             y: canvas.height / 2,
             size: PLAYER_SETTINGS.size,
-            angle: -Math.PI / 2, // Arah awal ke atas
+            angle: -Math.PI / 2,
             velocity: { x: 0, y: 0 },
             bullets: [],
             lastShot: 0,
@@ -667,6 +719,9 @@
             power = 100;
             asteroidsDestroyedThisLevel = 0;
             asteroidsNeededForNextLevel = 10;
+            isBossLevel = false; 
+            boss = null;
+            bossesDefeated = 0; // MODIFIED: Reset penghitung bos
 
             player.x = canvas.width / 2;
             player.y = canvas.height / 2;
@@ -692,6 +747,7 @@
             document.getElementById('gameStart').classList.add('hidden');
             document.getElementById('gameOver').classList.add('hidden');
             document.getElementById('uiOverlay').classList.remove('hidden');
+            document.getElementById('bossUIContainer').classList.add('hidden');
 
             lastTime = 0;
             updateUI();
@@ -715,33 +771,45 @@
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             updatePlayer(deltaTime);
-            updateBullets(player.bullets, '#0ff', true); 
-            updateBullets(enemyBullets, '#f55', false);
-            updateAsteroids();
-            updateEnemies();
+            updateBullets(player.bullets); 
+            updateBullets(enemyBullets);
             updateParticles();
             updatePowerUps(deltaTime);
 
-            checkCollisions();
+            if (isBossLevel) {
+                if (boss) {
+                    updateBoss(deltaTime);
+                    drawBoss();
+                }
+            } else {
+                updateAsteroids();
+                updateEnemies();
+                drawAsteroids();
+                drawEnemies();
 
-            if (asteroids.length < 3 + level && Math.random() < 0.02) {
-                createAsteroid();
+                if (asteroids.length < 3 + level && Math.random() < 0.02) {
+                    createAsteroid();
+                }
+                
+                // MODIFIED: Logika baru untuk memunculkan musuh
+                const maxEnemies = 1 + bossesDefeated;
+                if (!isBossLevel && enemyShips.length < maxEnemies && Math.random() < 0.005) {
+                    createEnemyShip();
+                }
+
+                 if (asteroidsDestroyedThisLevel >= asteroidsNeededForNextLevel) levelUp();
             }
-            if (enemyShips.length < 1 + Math.floor(level / 3) && Math.random() < 0.005) {
-                 createEnemyShip();
-            }
+
+            checkCollisions();
 
             drawPlayer();
             drawBullets(player.bullets, '#0ff');
             drawBullets(enemyBullets, '#f55');
-            drawAsteroids();
-            drawEnemies();
             drawParticles();
             drawPowerUps();
 
             updateUI();
 
-            if (asteroidsDestroyedThisLevel >= asteroidsNeededForNextLevel) levelUp();
             if (health <= 0) {
                 gameOver();
                 return;
@@ -810,7 +878,7 @@
             }
         }
 
-        function updateBullets(bulletArray, color, shouldWrap) {
+        function updateBullets(bulletArray) {
             const now = Date.now();
             for (let i = bulletArray.length - 1; i >= 0; i--) {
                 const bullet = bulletArray[i];
@@ -823,13 +891,15 @@
                 bullet.x += Math.cos(bullet.angle) * bullet.speed;
                 bullet.y += Math.sin(bullet.angle) * bullet.speed;
 
+                // Player bullets wrap, enemy bullets don't
+                const shouldWrap = (bulletArray === player.bullets);
                 if (shouldWrap) {
                     if (bullet.x < 0) bullet.x = canvas.width;
                     if (bullet.x > canvas.width) bullet.x = 0;
                     if (bullet.y < 0) bullet.y = canvas.height;
                     if (bullet.y > canvas.height) bullet.y = 0;
                 } else {
-                    if (bullet.x < 0 || bullet.x > canvas.width || bullet.y < 0 || bullet.y > canvas.height) {
+                    if (bullet.x < -20 || bullet.x > canvas.width + 20 || bullet.y < -20 || bullet.y > canvas.height + 20) {
                         bulletArray.splice(i, 1);
                     }
                 }
@@ -877,6 +947,45 @@
                 }
             }
         }
+        
+        function updateBoss(deltaTime) {
+            const dx = player.x - boss.x;
+            const dy = player.y - boss.y;
+            boss.angle = Math.atan2(dy, dx);
+
+            boss.x += Math.cos(boss.angle) * boss.speed;
+            boss.y += Math.sin(boss.angle) * boss.speed;
+            
+            if (boss.x < -boss.size) boss.x = canvas.width + boss.size;
+            if (boss.x > canvas.width + boss.size) boss.x = -boss.size;
+            if (boss.y < -boss.size) boss.y = canvas.height + boss.size;
+            if (boss.y > canvas.height + boss.size) boss.y = -boss.size;
+
+            const now = Date.now();
+
+            if (now - boss.lastSpecialAttack > boss.specialAttackCooldown) {
+                boss.lastSpecialAttack = now;
+                const spreadAngles = [-0.2, 0, 0.2];
+                for (const angleOffset of spreadAngles) {
+                    enemyBullets.push({
+                        x: boss.x, y: boss.y, angle: boss.angle + angleOffset,
+                        speed: 6, size: 12, // MODIFIED: Larger bullet size
+                        isBossBullet: true, // NEW: Identifier
+                        createdAt: Date.now()
+                    });
+                }
+            }
+            
+            else if (now - boss.lastShot > boss.shootDelay) {
+                boss.lastShot = now;
+                 enemyBullets.push({
+                    x: boss.x, y: boss.y, angle: boss.angle, 
+                    speed: 7, size: 10, // MODIFIED: Larger bullet size
+                    isBossBullet: true, // NEW: Identifier
+                    createdAt: Date.now()
+                });
+            }
+        }
 
         function updateParticles() {
             for (let i = particles.length - 1; i >= 0; i--) {
@@ -893,6 +1002,17 @@
                 const bullet = player.bullets[i];
                 let bulletRemoved = false;
 
+                if (isBossLevel && boss && isColliding(bullet, boss)) {
+                    boss.hp -= 10;
+                    createExplosion(bullet.x, bullet.y, 10, '#c000ff');
+                    player.bullets.splice(i, 1);
+                    bulletRemoved = true;
+                    if (boss.hp <= 0) {
+                        defeatBoss();
+                    }
+                    continue;
+                }
+                
                 for (let j = asteroids.length - 1; j >= 0; j--) {
                     const asteroid = asteroids[j];
                     if (isColliding(bullet, asteroid)) {
@@ -905,15 +1025,13 @@
                         }
 
                         if (asteroid.imageObject === bigAsteroidImage) {
-                            for (let k = 0; k < 3; k++) {
+                            for (let k = 0; k < 2; k++) { 
                                 asteroids.push({
-                                    x: asteroid.x,
-                                    y: asteroid.y,
-                                    size: asteroid.size / 2.5,
-                                    speed: asteroid.speed * 1.4,
+                                    x: asteroid.x, y: asteroid.y, 
+                                    size: asteroid.size / 1.8,
+                                    speed: asteroid.speed * 0.8, 
                                     angle: asteroid.angle + (k - 1) * 0.8,
-                                    imageObject: smallAsteroidImage,
-                                    rotation: 0,
+                                    imageObject: smallAsteroidImage, rotation: 0,
                                     rotationSpeed: (Math.random() - 0.5) * 0.03
                                 });
                             }
@@ -941,6 +1059,13 @@
             }
             
             if (!player.isInvincible) {
+                if (isBossLevel && boss && isColliding(player, boss)) {
+                    createExplosion(player.x, player.y, 20, '#f00');
+                    health -= 15;
+                    player.isInvincible = true;
+                    player.invincibilityTimer = 3;
+                }
+                
                 for (let i = asteroids.length - 1; i >= 0; i--) {
                     const asteroid = asteroids[i];
                     if (isColliding(player, asteroid)) {
@@ -956,7 +1081,12 @@
                     const bullet = enemyBullets[i];
                     if (isColliding(player, bullet)) {
                         createExplosion(player.x, player.y, 10, '#f55');
-                        health -= 10;
+                        // --- MODIFIED: Boss bullet damage ---
+                        if (bullet.isBossBullet) {
+                            health -= 20; // Double damage!
+                        } else {
+                            health -= 10; // Normal damage
+                        }
                         enemyBullets.splice(i, 1);
                         player.isInvincible = true;
                         player.invincibilityTimer = 3;
@@ -985,63 +1115,43 @@
 
         // --- Creation Functions ---
         function createAsteroid() {
-            let size;
-            let imageObject;
-
+            let size, imageObject, speed;
             if (Math.random() > 0.4) { 
                 size = Math.random() * 20 + 40; 
                 imageObject = bigAsteroidImage;
+                speed = Math.random() * 1 + 0.5; // Speed for big asteroids
             } else { 
                 size = Math.random() * 15 + 20; 
                 imageObject = smallAsteroidImage;
+                speed = Math.random() * 0.5 + 0.3; // Slower speed for small asteroids
             }
-            
             let x, y;
             if (Math.random() < 0.5) {
-                x = Math.random() < 0.5 ? -size : canvas.width + size;
-                y = Math.random() * canvas.height;
+                x = Math.random() < 0.5 ? -size : canvas.width + size; y = Math.random() * canvas.height;
             } else {
-                x = Math.random() * canvas.width;
-                y = Math.random() < 0.5 ? -size : canvas.height + size;
+                x = Math.random() * canvas.width; y = Math.random() < 0.5 ? -size : canvas.height + size;
             }
-
             asteroids.push({
-                x, y, size, imageObject,
-                speed: Math.random() * 1 + 0.5,
-                angle: Math.random() * Math.PI * 2,
-                rotation: 0,
+                x, y, size, imageObject, speed: speed, // Use the new speed variable
+                angle: Math.random() * Math.PI * 2, rotation: 0,
                 rotationSpeed: (Math.random() - 0.5) * 0.02
             });
         }
         
-        // --- FUNGSI DIPERBAIKI: Mencegah item sejenis muncul berdempetan ---
-        function createPowerUp(x, y) {
+        function createPowerUp(x, y, forcedType = null) {
             let type;
-            const rand = Math.random(); 
-
-            if (rand < 0.15) {
-                type = 'ultimatum';
-            } else if (rand < 0.35) {
-                type = 'triple-shot';
+            if (forcedType) {
+                type = forcedType;
             } else {
-                type = 'rapid-fire';
+                // --- MODIFIED: Added Health Boost to spawn pool ---
+                const rand = Math.random();
+                if (rand < 0.10) { type = 'ultimatum'; } 
+                else if (rand < 0.40) { type = 'health-boost'; } // 25% chance
+                else if (rand < 0.50) { type = 'triple-shot'; } 
+                else { type = 'rapid-fire'; }
             }
-
-            // --- KODE BARU: Cek jarak dengan item sejenis yang sudah ada ---
-            const MIN_DISTANCE_BETWEEN_SAME_POWERUPS = 100; // Jarak minimal dalam piksel
-            for (const existingPowerUp of powerUps) {
-                if (existingPowerUp.type === type) {
-                    const dx = x - existingPowerUp.x;
-                    const dy = y - existingPowerUp.y;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
-                    if (distance < MIN_DISTANCE_BETWEEN_SAME_POWERUPS) {
-                        return; // Batalkan pembuatan power-up jika terlalu dekat dengan yang sejenis
-                    }
-                }
-            }
-            // --- AKHIR KODE BARU ---
             
-            const itemSize = (type === 'ultimatum') ? 20 : 12;
+            const itemSize = (type === 'health-boost') ? 16 : (type === 'ultimatum') ? 20 : 12;
             powerUps.push({ x, y, type, size: itemSize, life: 10 });
         }
         
@@ -1049,19 +1159,13 @@
             const size = 15;
             let x, y;
             if (Math.random() < 0.5) {
-                x = Math.random() < 0.5 ? -size : canvas.width + size;
-                y = Math.random() * canvas.height;
+                x = Math.random() < 0.5 ? -size : canvas.width + size; y = Math.random() * canvas.height;
             } else {
-                x = Math.random() * canvas.width;
-                y = Math.random() < 0.5 ? -size : canvas.height + size;
+                x = Math.random() * canvas.width; y = Math.random() < 0.5 ? -size : canvas.height + size;
             }
             enemyShips.push({
-                x, y, size,
-                collisionRadius: 25, 
-                speed: Math.random() * 1.5 + 0.5,
-                angle: 0,
-                lastShot: 0,
-                shootDelay: 1500 - (level * 50)
+                x, y, size, collisionRadius: 25, speed: Math.random() * 1.5 + 0.5,
+                angle: 0, lastShot: 0, shootDelay: 1500 - (level * 50)
             });
         }
 
@@ -1070,11 +1174,8 @@
             const colors = [baseColor, '#f90', '#ff0', '#fff'];
             for (let i = 0; i < particleCount; i++) {
                 particles.push({
-                    x, y,
-                    vx: (Math.random() - 0.5) * 6,
-                    vy: (Math.random() - 0.5) * 6,
-                    life: Math.random() * 30 + 20,
-                    color: colors[Math.floor(Math.random() * colors.length)],
+                    x, y, vx: (Math.random() - 0.5) * 6, vy: (Math.random() - 0.5) * 6,
+                    life: Math.random() * 30 + 20, color: colors[Math.floor(Math.random() * colors.length)],
                     size: Math.random() * 3 + 1
                 });
             }
@@ -1083,25 +1184,18 @@
         // --- Drawing Functions ---
         function drawPlayer() {
             const shouldBlink = player.isInvincible && Math.floor(player.invincibilityTimer * 10) % 2 === 0;
-            if (shouldBlink) {
-                return;
-            }
+            if (shouldBlink) return;
 
             ctx.save();
             ctx.translate(player.x, player.y);
             ctx.rotate(player.angle + Math.PI / 2);
-
-            const playerWidth = player.size * 2.5;
-            const playerHeight = player.size * 2.5;
+            const playerWidth = player.size * 2.5; const playerHeight = player.size * 2.5;
             ctx.drawImage(playerImage, -playerWidth / 2, -playerHeight / 2, playerWidth, playerHeight);
 
             if (player.isBoosting || (keys.w || keys.ArrowUp)) {
                 const flameColor = player.isBoosting ? '#ff0' : '#f90';
-                ctx.fillStyle = flameColor;
-                ctx.shadowColor = flameColor;
-                ctx.shadowBlur = 15;
-                const flameWidth = player.size * 0.5;
-                const flameHeight = player.size * (1 + Math.random() * 0.5);
+                ctx.fillStyle = flameColor; ctx.shadowColor = flameColor; ctx.shadowBlur = 15;
+                const flameWidth = player.size * 0.5; const flameHeight = player.size * (1 + Math.random() * 0.5);
                 ctx.fillRect(-flameWidth / 2, playerHeight / 2 - 5, flameWidth, flameHeight);
             }
             ctx.restore();
@@ -1112,10 +1206,8 @@
                 ctx.save();
                 ctx.translate(asteroid.x, asteroid.y);
                 ctx.rotate(asteroid.rotation);
-                
                 const asteroidDiameter = asteroid.size * 2;
                 ctx.drawImage(asteroid.imageObject, -asteroid.size, -asteroid.size, asteroidDiameter, asteroidDiameter);
-                
                 ctx.restore();
             });
         }
@@ -1127,35 +1219,25 @@
                 ctx.globalAlpha = p.life / 10;
                 
                 if (p.type === 'ultimatum') {
-                    const pulse = Math.sin(Date.now() / 250);
-                    const glowSize = 15 + (pulse * 5);
-                    ctx.shadowColor = '#0ff';
-                    ctx.shadowBlur = glowSize;
-                    
+                    const pulse = Math.sin(Date.now() / 250); const glowSize = 15 + (pulse * 5);
+                    ctx.shadowColor = '#0ff'; ctx.shadowBlur = glowSize;
                     const itemDiameter = p.size * 2.5; 
                     ctx.drawImage(ultimatumImage, -itemDiameter / 2, -itemDiameter / 2, itemDiameter, itemDiameter);
-
+                // --- NEW: Draw Health Boost ---
+                } else if (p.type === 'health-boost') {
+                    const pulse = Math.sin(Date.now() / 200) * 0.1 + 1; // Simple pulse effect
+                    const itemSize = p.size * 2 * pulse;
+                    ctx.shadowColor = '#f00'; ctx.shadowBlur = 15;
+                    ctx.drawImage(heartImage, -itemSize / 2, -itemSize / 2, itemSize, itemSize);
                 } else {
-                    ctx.font = 'bold 14px Courier New';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
+                    ctx.font = 'bold 14px Courier New'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
                     let text = '';
-                    if (p.type === 'rapid-fire') {
-                        ctx.fillStyle = '#ff0';
-                        text = 'RF';
-                    } else if (p.type === 'triple-shot') {
-                        ctx.fillStyle = '#0ff';
-                        text = 'TS';
-                    }
-                    ctx.shadowColor = ctx.fillStyle;
-                    ctx.shadowBlur = 15;
+                    if (p.type === 'rapid-fire') { ctx.fillStyle = '#ff0'; text = 'RF'; } 
+                    else if (p.type === 'triple-shot') { ctx.fillStyle = '#0ff'; text = 'TS'; }
+                    ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 15;
                     ctx.fillText(text, 0, 0);
-                    
-                    ctx.strokeStyle = ctx.fillStyle;
-                    ctx.lineWidth = 2;
-                    ctx.beginPath();
-                    ctx.arc(0, 0, p.size, 0, Math.PI * 2);
-                    ctx.stroke();
+                    ctx.strokeStyle = ctx.fillStyle; ctx.lineWidth = 2;
+                    ctx.beginPath(); ctx.arc(0, 0, p.size, 0, Math.PI * 2); ctx.stroke();
                 }
                 ctx.restore();
             });
@@ -1166,25 +1248,41 @@
                 ctx.save();
                 ctx.translate(enemy.x, enemy.y);
                 ctx.rotate(enemy.angle + Math.PI / 2);
-
-                const enemyWidth = enemy.size * 3.5; 
-                const enemyHeight = enemy.size * 3.5;
-                
+                const enemyWidth = enemy.size * 3.5; const enemyHeight = enemy.size * 3.5;
                 ctx.drawImage(enemyImage, -enemyWidth / 2, -enemyHeight / 2, enemyWidth, enemyHeight);
-                
                 ctx.restore();
             });
         }
+        
+        function drawBoss() {
+            ctx.save();
+            ctx.translate(boss.x, boss.y);
+            const bossWidth = boss.size * 5; const bossHeight = boss.size * 5;
+            ctx.shadowColor = '#c000ff'; ctx.shadowBlur = 20;
+            ctx.drawImage(bossImage, -bossWidth / 2, -bossHeight / 2, bossWidth, bossHeight);
+            ctx.restore();
+        }
 
-        function drawBullets(bulletArray, color) {
+        function drawBullets(bulletArray, defaultColor) {
             bulletArray.forEach(bullet => {
                 ctx.save();
-                ctx.fillStyle = color;
-                ctx.shadowBlur = 8;
-                ctx.shadowColor = color;
-                ctx.beginPath();
-                ctx.arc(bullet.x, bullet.y, 3, 0, Math.PI * 2);
-                ctx.fill();
+                // --- MODIFIED: Draw boss bullets differently ---
+                if (bullet.isBossBullet) {
+                    const glowColor = '#ff4500'; // Oranye-merah menyala
+                    ctx.fillStyle = glowColor;
+                    ctx.shadowBlur = 25;
+                    ctx.shadowColor = glowColor;
+                    ctx.beginPath();
+                    ctx.arc(bullet.x, bullet.y, bullet.size, 0, Math.PI * 2); // Menggunakan size besar dari bullet
+                    ctx.fill();
+                } else {
+                    ctx.fillStyle = defaultColor; // Warna normal untuk peluru lain
+                    ctx.shadowBlur = 8;
+                    ctx.shadowColor = defaultColor;
+                    ctx.beginPath();
+                    ctx.arc(bullet.x, bullet.y, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                }
                 ctx.restore();
             });
         }
@@ -1192,11 +1290,8 @@
         function drawParticles() {
             particles.forEach(p => {
                 ctx.save();
-                ctx.globalAlpha = p.life / 50;
-                ctx.fillStyle = p.color;
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-                ctx.fill();
+                ctx.globalAlpha = p.life / 50; ctx.fillStyle = p.color;
+                ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
                 ctx.restore();
             });
         }
@@ -1207,12 +1302,10 @@
             const now = Date.now();
             if (now - player.lastShot > PLAYER_SETTINGS.shootDelay) {
                 player.lastShot = now;
-
                 const baseBullet = {
                     x: player.x + Math.cos(player.angle) * player.size,
                     y: player.y + Math.sin(player.angle) * player.size,
-                    speed: 10, size: 3,
-                    createdAt: Date.now()
+                    speed: 10, size: 3, createdAt: Date.now()
                 };
 
                 if (player.activePowerUp === 'triple-shot') {
@@ -1226,18 +1319,12 @@
         }
         
         function activateUltimatum() {
-            for (let i = asteroids.length - 1; i >= 0; i--) {
-                const asteroid = asteroids[i];
-                createExplosion(asteroid.x, asteroid.y, asteroid.size, '#8a2be2');
-                score += 100 * multiplier;
-            }
+            asteroids.forEach(a => createExplosion(a.x, a.y, a.size, '#8a2be2'));
+            score += asteroids.length * 100 * multiplier;
             asteroids = [];
 
-            for (let i = enemyShips.length - 1; i >= 0; i--) {
-                const enemy = enemyShips[i];
-                createExplosion(enemy.x, enemy.y, enemy.size, '#00ffff');
-                score += 250 * multiplier;
-            }
+            enemyShips.forEach(e => createExplosion(e.x, e.y, e.size, '#00ffff'));
+            score += enemyShips.length * 250 * multiplier;
             enemyShips = [];
         }
 
@@ -1245,16 +1332,20 @@
             deactivatePowerUp();
 
             if (type === 'ultimatum') {
-                activateUltimatum();
-                return;
+                activateUltimatum(); return;
+            }
+            
+            // --- NEW: Handle Health Boost Activation ---
+            if (type === 'health-boost') {
+                health += 25;
+                if (health > 100) health = 100;
+                createExplosion(player.x, player.y, 20, '#0f0'); // Efek visual saat darah bertambah
+                return; // Health boost tidak punya timer
             }
             
             player.activePowerUp = type;
             player.powerUpTimer = 10;
-
-            if (type === 'rapid-fire') {
-                PLAYER_SETTINGS.shootDelay = 80;
-            }
+            if (type === 'rapid-fire') { PLAYER_SETTINGS.shootDelay = 80; }
         }
 
         function deactivatePowerUp() {
@@ -1262,15 +1353,47 @@
             PLAYER_SETTINGS.shootDelay = player.baseShootDelay;
         }
 
+        function spawnBoss() {
+            const baseHp = 150; const hpPerLevel = 25; 
+            const bossMaxHp = baseHp + (level * hpPerLevel);
+            boss = {
+                x: canvas.width / 2, y: -100, size: 30, collisionRadius: 60,
+                speed: 0.5, angle: 0, hp: bossMaxHp, maxHp: bossMaxHp,
+                lastShot: Date.now(), shootDelay: 3000, 
+                lastSpecialAttack: Date.now(), specialAttackCooldown: 10000
+            };
+        }
+        
+        function defeatBoss() {
+            createExplosion(boss.x, boss.y, boss.size * 5, '#ff00ff');
+            score += 5000 * multiplier;
+            createPowerUp(boss.x, boss.y, 'ultimatum');
+            bossesDefeated++; // MODIFIED: Tambah hitungan bos yang kalah
+            boss = null; isBossLevel = false;
+            document.getElementById('bossUIContainer').classList.add('hidden');
+            levelUp(); 
+        }
 
         function levelUp() {
-            level++;
-            multiplier++;
-            asteroidsDestroyedThisLevel = 0;
-            asteroidsNeededForNextLevel += 5;
+            level++; multiplier++;
             
-            createExplosion(player.x, player.y, 40, '#0ff');
-            if (level % 5 === 0) showCryptoReward();
+            if (level % 5 === 0) {
+                isBossLevel = true; asteroids = []; enemyShips = [];
+                spawnBoss();
+                document.getElementById('bossUIContainer').classList.remove('hidden');
+            } else {
+                isBossLevel = false;
+                asteroidsDestroyedThisLevel = 0;
+                asteroidsNeededForNextLevel += 5;
+                createExplosion(player.x, player.y, 40, '#0ff');
+                if (level % 5 === 1 && level > 1) { 
+                    for(let i=0; i<3; i++) createAsteroid();
+                }
+            }
+            
+            if (level % 5 !== 0 && level % 6 !== 0) {
+                showCryptoReward();
+            }
         }
 
         function showCryptoReward() {
@@ -1286,6 +1409,14 @@
             document.getElementById('healthFill').style.width = `${health}%`;
             document.getElementById('powerFill').style.width = `${power}%`;
             
+            if (isBossLevel && boss) {
+                const bossHealthPercent = Math.max(0, (boss.hp / boss.maxHp) * 100);
+                document.getElementById('bossHealthFill').style.width = `${bossHealthPercent}%`;
+                document.getElementById('levelProgressUI').textContent = `DEFEAT THE COMMANDER!`;
+            } else {
+                 document.getElementById('levelProgressUI').textContent = `ASTEROIDS DESTROYED: ${asteroidsDestroyedThisLevel} / ${asteroidsNeededForNextLevel}`;
+            }
+
             const powerUpUI = document.getElementById('powerUpUI');
             if (player.powerUpTimer > 0) {
                 const powerUpName = player.activePowerUp.replace('-', ' ').toUpperCase();
@@ -1293,18 +1424,12 @@
             } else {
                 powerUpUI.textContent = '';
             }
-
-            document.getElementById('levelProgressUI').textContent = `ASTEROIDS DESTROYED: ${asteroidsDestroyedThisLevel} / ${asteroidsNeededForNextLevel}`;
         }
 
         function gameOver() {
             gameActive = false;
             document.getElementById('uiOverlay').classList.add('hidden');
-            
-            bgMusic.pause(); 
-            gameOverSound.currentTime = 0; 
-            gameOverSound.play(); 
-            
+            bgMusic.pause(); gameOverSound.currentTime = 0; gameOverSound.play(); 
             const tokensEarned = Math.floor(score / 5000);
             document.getElementById('finalScore').textContent = score;
             document.getElementById('tokensEarned').textContent = tokensEarned;
