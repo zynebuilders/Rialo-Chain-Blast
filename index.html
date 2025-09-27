@@ -115,9 +115,9 @@
             }
         }
 
-        /* Desktop Warning (Now hidden, but kept for potential future use) */
+        /* Desktop Warning */
         #desktop-warning {
-            display: none; 
+            display: none; /* Hidden by default */
             position: fixed;
             top: 0;
             left: 0;
@@ -137,8 +137,6 @@
             position: relative;
             width: 800px;
             height: 600px;
-            max-width: 100%;
-            max-height: 100%;
             visibility: hidden; 
             opacity: 0;
             transition: opacity 0.5s ease-in;
@@ -149,12 +147,23 @@
             opacity: 1;
         }
 
+        /* Show warning and hide game on small screens */
+        @media (max-width: 800px) or (max-height: 600px) {
+            #gameContainer {
+                display: none;
+            }
+            #desktop-warning {
+                display: flex;
+            }
+            #splash-screen, #pre-splash {
+                display: none;
+            }
+        }
+
         #gameCanvas {
             background-color: #000;
             display: block;
             border: 2px solid #333;
-            width: 100%;
-            height: 100%;
         }
 
         #uiOverlay {
@@ -245,6 +254,7 @@
             text-shadow: 0 0 5px #0f0;
         }
         
+        /* --- NEW MENU: USERNAME --- */
         #usernameMenu {
             position: absolute;
             top: 50%;
@@ -252,10 +262,11 @@
             transform: translate(-50%, -50%);
             text-align: center;
             z-index: 10;
+             /* No box styling as requested */
         }
 
         #game-art {
-            max-width: 350px;
+            max-width: 350px; /* Adjust size as needed */
             margin-bottom: 25px;
         }
 
@@ -268,7 +279,7 @@
             border-radius: 5px;
             font-family: 'Courier New', monospace;
             display: block;
-            margin: 0 auto 20px auto;
+            margin: 0 auto 20px auto; /* Center and add margin below */
             width: 80%;
             max-width: 300px;
             text-align: center;
@@ -393,6 +404,7 @@
             z-index: 5;
         }
 
+        /* --- STYLE UNTUK LINK POWERED BY --- */
         #poweredByLink {
             position: absolute;
             bottom: 20px;
@@ -404,92 +416,12 @@
             text-decoration: none;
             opacity: 0.6;
             transition: all 0.3s ease;
-            z-index: 1;
+            z-index: 1; /* Pastikan tidak tertutup elemen lain */
         }
 
         #poweredByLink:hover {
             opacity: 1;
             text-shadow: 0 0 8px #0f0;
-        }
-        
-        /* --- NEW: MOBILE CONTROLS STYLES (CORRECTED) --- */
-        #mobile-controls {
-            display: none; /* Hidden by default */
-            position: absolute;
-            bottom: 20px;
-            width: 100%;
-            height: 150px;
-            z-index: 5;
-            justify-content: space-between;
-            align-items: flex-end;
-            padding: 0 20px;
-            pointer-events: none; /* Container doesn't block clicks */
-        }
-
-        .control-pad, .action-pad {
-            display: grid;
-            gap: 10px;
-            pointer-events: auto; /* Buttons are clickable */
-        }
-
-        .control-pad {
-            grid-template-columns: repeat(3, 50px);
-            grid-template-rows: repeat(2, 50px);
-        }
-
-        .action-pad {
-            display: flex;
-            flex-direction: column-reverse;
-            gap: 10px;
-        }
-
-        .mobile-btn {
-            width: 50px;
-            height: 50px;
-            border: 2px solid #0f0;
-            background-color: rgba(0, 30, 0, 0.4);
-            color: #0f0;
-            border-radius: 50%;
-            font-size: 24px;
-            font-weight: bold;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            user-select: none; /* Prevent text selection */
-            transition: background-color 0.2s;
-        }
-        
-        .mobile-btn:active {
-            background-color: rgba(0, 255, 0, 0.4);
-        }
-
-        #action-boost {
-            border-color: #ff0;
-            color: #ff0;
-        }
-
-        #action-shoot {
-            width: 80px;
-            height: 80px;
-            border-color: #f00;
-            color: #f00;
-        }
-        
-        /* Positioning grid items */
-        #move-up { grid-column: 2; grid-row: 1; }
-        #move-down { grid-column: 2; grid-row: 2; }
-        #move-left { grid-column: 1; grid-row: 2; }
-        #move-right { grid-column: 3; grid-row: 2; }
-
-        /* Show controls only on touch devices */
-        @media (pointer: coarse) {
-            #mobile-controls {
-                display: flex; /* This will now correctly show the controls */
-            }
-            /* Hide UI elements that conflict with on-screen buttons */
-            #healthContainer, #powerContainer {
-                display: none;
-            }
         }
 
     </style>
@@ -511,19 +443,6 @@
 
     <div id="gameContainer">
         <canvas id="gameCanvas" width="800" height="600"></canvas>
-
-        <div id="mobile-controls">
-            <div class="control-pad">
-                <div id="move-up" class="mobile-btn">▲</div>
-                <div id="move-left" class="mobile-btn">◀</div>
-                <div id="move-down" class="mobile-btn">▼</div>
-                <div id="move-right" class="mobile-btn">▶</div>
-            </div>
-            <div class="action-pad">
-                <div id="action-boost" class="mobile-btn">⚡</div>
-                <div id="action-shoot" class="mobile-btn">⨷</div>
-            </div>
-        </div>
 
         <div id="uiOverlay" class="hidden">
             <div id="topUI">
@@ -634,6 +553,7 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         
+        // Muat semua gambar yang dibutuhkan
         const playerImage = new Image();
         playerImage.src = 'jet.png';
 
@@ -646,8 +566,9 @@
         const enemyImage = new Image();
         enemyImage.src = 'musuh.png';
         
+        // --- KODE BARU: Muat gambar item Ultimatum ---
         const ultimatumImage = new Image();
-        ultimatumImage.src = 'item.png'; 
+        ultimatumImage.src = 'item.png'; // Pastikan nama file ini sesuai dengan file yang Anda unggah
 
         const bgMusic = document.getElementById('bgMusic');
         const gameOverSound = document.getElementById('gameOverSound');
@@ -685,7 +606,7 @@
             x: canvas.width / 2,
             y: canvas.height / 2,
             size: PLAYER_SETTINGS.size,
-            angle: -Math.PI / 2,
+            angle: -Math.PI / 2, // Arah awal ke atas
             velocity: { x: 0, y: 0 },
             bullets: [],
             lastShot: 0,
@@ -734,37 +655,6 @@
             document.getElementById('exitButton').addEventListener('click', returnToStartMenu);
             document.addEventListener('keydown', handleKeyDown);
             document.addEventListener('keyup', handleKeyUp);
-            
-            initMobileControls();
-        }
-
-        function initMobileControls() {
-            const controls = [
-                { id: 'move-up', key: 'w' },
-                { id: 'move-down', key: 's' },
-                { id: 'move-left', key: 'a' },
-                { id: 'move-right', key: 'd' },
-                { id: 'action-boost', key: 'Shift' },
-                { id: 'action-shoot', key: ' ' }
-            ];
-
-            controls.forEach(control => {
-                const element = document.getElementById(control.id);
-                if (element) {
-                    element.addEventListener('touchstart', (e) => {
-                        e.preventDefault();
-                        keys[control.key] = true;
-                        if (control.key === ' ') {
-                           shoot();
-                        }
-                    }, { passive: false });
-
-                    element.addEventListener('touchend', (e) => {
-                        e.preventDefault();
-                        keys[control.key] = false;
-                    }, { passive: false });
-                }
-            });
         }
 
         // --- Game Start/Reset ---
@@ -807,7 +697,7 @@
             updateUI();
             
             bgMusic.currentTime = 0; 
-            bgMusic.play().catch(e => console.log("Autoplay was prevented."));
+            bgMusic.play();
             
             requestAnimationFrame(gameLoop);
         }
@@ -821,7 +711,6 @@
             const deltaTime = (timestamp - (lastTime || timestamp)) / 1000;
             lastTime = timestamp;
 
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = 'black';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -1125,6 +1014,7 @@
             });
         }
         
+        // --- FUNGSI DIPERBAIKI: Mencegah item sejenis muncul berdempetan ---
         function createPowerUp(x, y) {
             let type;
             const rand = Math.random(); 
@@ -1137,17 +1027,19 @@
                 type = 'rapid-fire';
             }
 
-            const MIN_DISTANCE_BETWEEN_SAME_POWERUPS = 100;
+            // --- KODE BARU: Cek jarak dengan item sejenis yang sudah ada ---
+            const MIN_DISTANCE_BETWEEN_SAME_POWERUPS = 100; // Jarak minimal dalam piksel
             for (const existingPowerUp of powerUps) {
                 if (existingPowerUp.type === type) {
                     const dx = x - existingPowerUp.x;
                     const dy = y - existingPowerUp.y;
                     const distance = Math.sqrt(dx * dx + dy * dy);
                     if (distance < MIN_DISTANCE_BETWEEN_SAME_POWERUPS) {
-                        return;
+                        return; // Batalkan pembuatan power-up jika terlalu dekat dengan yang sejenis
                     }
                 }
             }
+            // --- AKHIR KODE BARU ---
             
             const itemSize = (type === 'ultimatum') ? 20 : 12;
             powerUps.push({ x, y, type, size: itemSize, life: 10 });
