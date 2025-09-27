@@ -240,9 +240,10 @@
             color: #f00;
         }
 
-        #powerContainer {
+        /* --- MODIFIED FOR ULTIMATE SKILL --- */
+        #ultimateContainer {
             right: 150px;
-            color: #0f0;
+            color: #ff8c00; /* Orange color for Ultimate */
         }
 
         .uiBar {
@@ -262,13 +263,15 @@
             transition: width 0.3s;
         }
 
-        #powerFill {
-            width: 100%;
+        #ultimateFill {
+            width: 0%; /* Start empty */
             height: 100%;
-            background: linear-gradient(to right, #090, #0f0);
-            box-shadow: 0 0 10px #0f0;
+            background: linear-gradient(to right, #e25822, #ff8c00);
+            box-shadow: 0 0 10px #ff8c00;
             transition: width 0.3s;
         }
+        /* --- END MODIFICATION --- */
+
 
         #powerUpUI {
             position: absolute;
@@ -501,10 +504,10 @@
                 </div>
             </div>
 
-            <div id="powerContainer" class="uiBarContainer">
-                <p>PWR</p>
+            <div id="ultimateContainer" class="uiBarContainer">
+                <p>ULT</p>
                 <div class="uiBar">
-                    <div id="powerFill"></div>
+                    <div id="ultimateFill"></div>
                 </div>
             </div>
             <div id="levelProgressUI"></div>
@@ -531,7 +534,7 @@
                 <p>S/Down Arrow - Thrust Backward</p>
                 <p>A/D or Left/Right Arrows - Rotate</p>
                 <p>Spacebar - Shoot</p>
-                <p>Shift - Boost (consumes power)</p>
+                <p>Shift - Activate Ultimate (when bar is full)</p>
             </div>
         </div>
 
@@ -629,13 +632,16 @@
         let level = 1;
         let multiplier = 1;
         let health = 100;
-        let power = 100;
         let asteroidsDestroyedThisLevel = 0;
         let asteroidsNeededForNextLevel = 10;
         let username = 'Player';
         let isBossLevel = false;
         let boss = null;
-        let bossesDefeated = 0; // MODIFIED: Menghitung bos yang dikalahkan
+        let bossesDefeated = 0;
+
+        // --- NEW: Ultimate Skill Variables ---
+        let ultimateCharge = 0;
+        const ULTIMATE_CHARGE_NEEDED = 30;
 
         // --- Game Objects ---
         let asteroids = [];
@@ -643,6 +649,7 @@
         let particles = [];
         let enemyBullets = [];
         let powerUps = [];
+        let homingBombs = []; // Array for ultimate skill projectiles
 
         // --- Player Configuration ---
         const PLAYER_SETTINGS = {
@@ -651,7 +658,6 @@
             rotationSpeed: 0.08,
             friction: 0.98,
             shootDelay: 200,
-            boostMultiplier: 2.5
         };
 
         const player = {
@@ -662,7 +668,6 @@
             velocity: { x: 0, y: 0 },
             bullets: [],
             lastShot: 0,
-            isBoosting: false,
             activePowerUp: 'none',
             powerUpTimer: 0,
             baseShootDelay: PLAYER_SETTINGS.shootDelay,
@@ -680,6 +685,8 @@
         function handleKeyDown(e) {
             if (keys.hasOwnProperty(e.key)) keys[e.key] = true;
             if (e.key === ' ') shoot();
+            // --- NEW: Activate Ultimate ---
+            if (e.key === 'Shift') activateUltimate();
         }
 
         function handleKeyUp(e) {
@@ -716,12 +723,12 @@
             level = 1;
             multiplier = 1;
             health = 100;
-            power = 100;
+            ultimateCharge = 0; // Reset ultimate
             asteroidsDestroyedThisLevel = 0;
             asteroidsNeededForNextLevel = 10;
             isBossLevel = false; 
             boss = null;
-            bossesDefeated = 0; // MODIFIED: Reset penghitung bos
+            bossesDefeated = 0;
 
             player.x = canvas.width / 2;
             player.y = canvas.height / 2;
@@ -739,6 +746,7 @@
             particles = [];
             enemyBullets = [];
             powerUps = [];
+            homingBombs = []; // Reset bombs
 
             for (let i = 0; i < 5 + level; i++) {
                 createAsteroid();
@@ -775,6 +783,7 @@
             updateBullets(enemyBullets);
             updateParticles();
             updatePowerUps(deltaTime);
+            updateHomingBombs(); // Update ultimate bombs
 
             if (isBossLevel) {
                 if (boss) {
@@ -791,7 +800,6 @@
                     createAsteroid();
                 }
                 
-                // MODIFIED: Logika baru untuk memunculkan musuh
                 const maxEnemies = 1 + bossesDefeated;
                 if (!isBossLevel && enemyShips.length < maxEnemies && Math.random() < 0.005) {
                     createEnemyShip();
@@ -807,6 +815,7 @@
             drawBullets(enemyBullets, '#f55');
             drawParticles();
             drawPowerUps();
+            drawHomingBombs(); // Draw ultimate bombs
 
             updateUI();
 
@@ -823,8 +832,7 @@
             if (keys.a || keys.ArrowLeft) player.angle -= PLAYER_SETTINGS.rotationSpeed;
             if (keys.d || keys.ArrowRight) player.angle += PLAYER_SETTINGS.rotationSpeed;
 
-            player.isBoosting = (keys.Shift && power > 0);
-            const currentThrust = PLAYER_SETTINGS.thrust * (player.isBoosting ? PLAYER_SETTINGS.boostMultiplier : 1);
+            const currentThrust = PLAYER_SETTINGS.thrust;
 
             if (keys.w || keys.ArrowUp) {
                 player.velocity.x += Math.cos(player.angle) * currentThrust;
@@ -833,14 +841,6 @@
             if (keys.s || keys.ArrowDown) {
                 player.velocity.x -= Math.cos(player.angle) * currentThrust * 0.5;
                 player.velocity.y -= Math.sin(player.angle) * currentThrust * 0.5;
-            }
-
-            if (player.isBoosting) {
-                power -= 1;
-                if (power < 0) power = 0;
-            } else if (power < 100) {
-                power += 0.2;
-                if (power > 100) power = 100;
             }
 
             player.velocity.x *= PLAYER_SETTINGS.friction;
@@ -891,7 +891,6 @@
                 bullet.x += Math.cos(bullet.angle) * bullet.speed;
                 bullet.y += Math.sin(bullet.angle) * bullet.speed;
 
-                // Player bullets wrap, enemy bullets don't
                 const shouldWrap = (bulletArray === player.bullets);
                 if (shouldWrap) {
                     if (bullet.x < 0) bullet.x = canvas.width;
@@ -969,8 +968,8 @@
                 for (const angleOffset of spreadAngles) {
                     enemyBullets.push({
                         x: boss.x, y: boss.y, angle: boss.angle + angleOffset,
-                        speed: 6, size: 12, // MODIFIED: Larger bullet size
-                        isBossBullet: true, // NEW: Identifier
+                        speed: 6, size: 12,
+                        isBossBullet: true, 
                         createdAt: Date.now()
                     });
                 }
@@ -980,8 +979,8 @@
                 boss.lastShot = now;
                  enemyBullets.push({
                     x: boss.x, y: boss.y, angle: boss.angle, 
-                    speed: 7, size: 10, // MODIFIED: Larger bullet size
-                    isBossBullet: true, // NEW: Identifier
+                    speed: 7, size: 10,
+                    isBossBullet: true,
                     createdAt: Date.now()
                 });
             }
@@ -997,7 +996,45 @@
             }
         }
         
+        // --- MODIFIED: Update Homing Fireballs ---
+        function updateHomingBombs() {
+            for (let i = homingBombs.length - 1; i >= 0; i--) {
+                const bomb = homingBombs[i];
+                
+                const targetStillExists = asteroids.includes(bomb.target) || enemyShips.includes(bomb.target) || bomb.target === boss;
+                if (!bomb.target || !targetStillExists) {
+                    createExplosion(bomb.x, bomb.y, 20, '#ff8c00');
+                    homingBombs.splice(i, 1);
+                    continue;
+                }
+
+                const dx = bomb.target.x - bomb.x;
+                const dy = bomb.target.y - bomb.y;
+                const targetAngle = Math.atan2(dy, dx);
+                
+                let angleDiff = targetAngle - bomb.angle;
+                while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+                while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+                bomb.angle += angleDiff * bomb.turnSpeed;
+
+                bomb.x += Math.cos(bomb.angle) * bomb.speed;
+                bomb.y += Math.sin(bomb.angle) * bomb.speed;
+
+                // Emit fire particles for a trail effect
+                if (Math.random() < 0.6) {
+                    particles.push({
+                        x: bomb.x, y: bomb.y,
+                        vx: (Math.random() - 0.5) * 0.5, vy: (Math.random() - 0.5) * 0.5,
+                        life: Math.random() * 15 + 5,
+                        color: ['#ff8c00', '#ffa500', '#ff4500'][Math.floor(Math.random() * 3)],
+                        size: Math.random() * 2 + 1
+                    });
+                }
+            }
+        }
+        
         function checkCollisions() {
+            // Player bullet collisions
             for (let i = player.bullets.length - 1; i >= 0; i--) {
                 const bullet = player.bullets[i];
                 let bulletRemoved = false;
@@ -1040,6 +1077,9 @@
                         asteroids.splice(j, 1);
                         asteroidsDestroyedThisLevel++;
                         score += 100 * multiplier;
+                        if (ultimateCharge < ULTIMATE_CHARGE_NEEDED) {
+                            ultimateCharge++;
+                        }
                         break;
                     }
                 }
@@ -1058,6 +1098,38 @@
                 }
             }
             
+            // --- MODIFIED: Homing fireball collisions ---
+            for (let i = homingBombs.length - 1; i >= 0; i--) {
+                const bomb = homingBombs[i];
+                let bombHit = false;
+
+                if (bomb.target && isColliding(bomb, bomb.target)) {
+                    createExplosion(bomb.x, bomb.y, 50, '#ff8c00'); // Big orange explosion
+                    
+                    const asteroidIndex = asteroids.indexOf(bomb.target);
+                    if (asteroidIndex > -1) {
+                        asteroids.splice(asteroidIndex, 1);
+                        score += 100 * multiplier;
+                        asteroidsDestroyedThisLevel++;
+                    }
+
+                    const enemyIndex = enemyShips.indexOf(bomb.target);
+                    if (enemyIndex > -1) {
+                        enemyShips.splice(enemyIndex, 1);
+                        score += 250 * multiplier;
+                    }
+                    
+                    if (isBossLevel && bomb.target === boss) {
+                        boss.hp -= 50;
+                        if (boss.hp <= 0) defeatBoss();
+                    }
+
+                    homingBombs.splice(i, 1);
+                    bombHit = true;
+                }
+            }
+
+            // Player collision with environment/enemies
             if (!player.isInvincible) {
                 if (isBossLevel && boss && isColliding(player, boss)) {
                     createExplosion(player.x, player.y, 20, '#f00');
@@ -1081,12 +1153,8 @@
                     const bullet = enemyBullets[i];
                     if (isColliding(player, bullet)) {
                         createExplosion(player.x, player.y, 10, '#f55');
-                        // --- MODIFIED: Boss bullet damage ---
-                        if (bullet.isBossBullet) {
-                            health -= 20; // Double damage!
-                        } else {
-                            health -= 10; // Normal damage
-                        }
+                        if (bullet.isBossBullet) health -= 20;
+                        else health -= 10;
                         enemyBullets.splice(i, 1);
                         player.isInvincible = true;
                         player.invincibilityTimer = 3;
@@ -1095,6 +1163,7 @@
                 }
             }
             
+            // Player collision with power-ups
             for (let i = powerUps.length - 1; i >= 0; i--) {
                 const p = powerUps[i];
                 if (isColliding(player, p)) {
@@ -1119,11 +1188,11 @@
             if (Math.random() > 0.4) { 
                 size = Math.random() * 20 + 40; 
                 imageObject = bigAsteroidImage;
-                speed = Math.random() * 1 + 0.5; // Speed for big asteroids
+                speed = Math.random() * 1 + 0.5;
             } else { 
                 size = Math.random() * 15 + 20; 
                 imageObject = smallAsteroidImage;
-                speed = Math.random() * 0.5 + 0.3; // Slower speed for small asteroids
+                speed = Math.random() * 0.5 + 0.3;
             }
             let x, y;
             if (Math.random() < 0.5) {
@@ -1132,7 +1201,7 @@
                 x = Math.random() * canvas.width; y = Math.random() < 0.5 ? -size : canvas.height + size;
             }
             asteroids.push({
-                x, y, size, imageObject, speed: speed, // Use the new speed variable
+                x, y, size, imageObject, speed: speed,
                 angle: Math.random() * Math.PI * 2, rotation: 0,
                 rotationSpeed: (Math.random() - 0.5) * 0.02
             });
@@ -1143,10 +1212,9 @@
             if (forcedType) {
                 type = forcedType;
             } else {
-                // --- MODIFIED: Added Health Boost to spawn pool ---
                 const rand = Math.random();
                 if (rand < 0.10) { type = 'ultimatum'; } 
-                else if (rand < 0.40) { type = 'health-boost'; } // 25% chance
+                else if (rand < 0.40) { type = 'health-boost'; }
                 else if (rand < 0.50) { type = 'triple-shot'; } 
                 else { type = 'rapid-fire'; }
             }
@@ -1192,8 +1260,8 @@
             const playerWidth = player.size * 2.5; const playerHeight = player.size * 2.5;
             ctx.drawImage(playerImage, -playerWidth / 2, -playerHeight / 2, playerWidth, playerHeight);
 
-            if (player.isBoosting || (keys.w || keys.ArrowUp)) {
-                const flameColor = player.isBoosting ? '#ff0' : '#f90';
+            if (keys.w || keys.ArrowUp) {
+                const flameColor = '#f90';
                 ctx.fillStyle = flameColor; ctx.shadowColor = flameColor; ctx.shadowBlur = 15;
                 const flameWidth = player.size * 0.5; const flameHeight = player.size * (1 + Math.random() * 0.5);
                 ctx.fillRect(-flameWidth / 2, playerHeight / 2 - 5, flameWidth, flameHeight);
@@ -1223,9 +1291,8 @@
                     ctx.shadowColor = '#0ff'; ctx.shadowBlur = glowSize;
                     const itemDiameter = p.size * 2.5; 
                     ctx.drawImage(ultimatumImage, -itemDiameter / 2, -itemDiameter / 2, itemDiameter, itemDiameter);
-                // --- NEW: Draw Health Boost ---
                 } else if (p.type === 'health-boost') {
-                    const pulse = Math.sin(Date.now() / 200) * 0.1 + 1; // Simple pulse effect
+                    const pulse = Math.sin(Date.now() / 200) * 0.1 + 1;
                     const itemSize = p.size * 2 * pulse;
                     ctx.shadowColor = '#f00'; ctx.shadowBlur = 15;
                     ctx.drawImage(heartImage, -itemSize / 2, -itemSize / 2, itemSize, itemSize);
@@ -1257,6 +1324,7 @@
         function drawBoss() {
             ctx.save();
             ctx.translate(boss.x, boss.y);
+            ctx.rotate(boss.angle + Math.PI / 2);
             const bossWidth = boss.size * 5; const bossHeight = boss.size * 5;
             ctx.shadowColor = '#c000ff'; ctx.shadowBlur = 20;
             ctx.drawImage(bossImage, -bossWidth / 2, -bossHeight / 2, bossWidth, bossHeight);
@@ -1266,17 +1334,16 @@
         function drawBullets(bulletArray, defaultColor) {
             bulletArray.forEach(bullet => {
                 ctx.save();
-                // --- MODIFIED: Draw boss bullets differently ---
                 if (bullet.isBossBullet) {
-                    const glowColor = '#ff4500'; // Oranye-merah menyala
+                    const glowColor = '#ff4500';
                     ctx.fillStyle = glowColor;
                     ctx.shadowBlur = 25;
                     ctx.shadowColor = glowColor;
                     ctx.beginPath();
-                    ctx.arc(bullet.x, bullet.y, bullet.size, 0, Math.PI * 2); // Menggunakan size besar dari bullet
+                    ctx.arc(bullet.x, bullet.y, bullet.size, 0, Math.PI * 2);
                     ctx.fill();
                 } else {
-                    ctx.fillStyle = defaultColor; // Warna normal untuk peluru lain
+                    ctx.fillStyle = defaultColor;
                     ctx.shadowBlur = 8;
                     ctx.shadowColor = defaultColor;
                     ctx.beginPath();
@@ -1292,6 +1359,21 @@
                 ctx.save();
                 ctx.globalAlpha = p.life / 50; ctx.fillStyle = p.color;
                 ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+                ctx.restore();
+            });
+        }
+
+        // --- MODIFIED: Draw Homing Fireballs ---
+        function drawHomingBombs() {
+            homingBombs.forEach(bomb => {
+                ctx.save();
+                ctx.fillStyle = '#ff4500'; // OrangeRed
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = '#ffcc00'; // Yellowish glow
+                
+                ctx.beginPath();
+                ctx.arc(bomb.x, bomb.y, bomb.size, 0, Math.PI * 2);
+                ctx.fill();
                 ctx.restore();
             });
         }
@@ -1327,6 +1409,36 @@
             score += enemyShips.length * 250 * multiplier;
             enemyShips = [];
         }
+        
+        // --- MODIFIED: Activate Ultimate Skill ---
+        function activateUltimate() {
+            if (ultimateCharge < ULTIMATE_CHARGE_NEEDED || !gameActive) return;
+
+            let targets = [...asteroids, ...enemyShips];
+            if (isBossLevel && boss) {
+                targets.push(boss);
+            }
+            if (targets.length === 0) return;
+
+            // Fire exactly 6 fireballs
+            for (let i = 0; i < 6; i++) {
+                // Assign a target to each fireball, cycling through the target list
+                const target = targets[i % targets.length];
+                homingBombs.push({
+                    x: player.x,
+                    y: player.y,
+                    target: target,
+                    speed: 7, // A bit faster
+                    turnSpeed: 0.08,
+                    angle: player.angle + (Math.random() - 0.5), // Slight random spread
+                    size: 7
+                });
+            }
+            
+            createExplosion(player.x, player.y, 40, '#ff8c00'); // Fiery activation explosion
+            
+            ultimateCharge = 0;
+        }
 
         function activatePowerUp(type) {
             deactivatePowerUp();
@@ -1335,12 +1447,11 @@
                 activateUltimatum(); return;
             }
             
-            // --- NEW: Handle Health Boost Activation ---
             if (type === 'health-boost') {
                 health += 25;
                 if (health > 100) health = 100;
-                createExplosion(player.x, player.y, 20, '#0f0'); // Efek visual saat darah bertambah
-                return; // Health boost tidak punya timer
+                createExplosion(player.x, player.y, 20, '#0f0');
+                return;
             }
             
             player.activePowerUp = type;
@@ -1357,7 +1468,7 @@
             const baseHp = 150; const hpPerLevel = 25; 
             const bossMaxHp = baseHp + (level * hpPerLevel);
             boss = {
-                x: canvas.width / 2, y: -100, size: 30, collisionRadius: 60,
+                x: canvas.width / 2, y: 120, size: 30, collisionRadius: 60,
                 speed: 0.5, angle: 0, hp: bossMaxHp, maxHp: bossMaxHp,
                 lastShot: Date.now(), shootDelay: 3000, 
                 lastSpecialAttack: Date.now(), specialAttackCooldown: 10000
@@ -1368,7 +1479,12 @@
             createExplosion(boss.x, boss.y, boss.size * 5, '#ff00ff');
             score += 5000 * multiplier;
             createPowerUp(boss.x, boss.y, 'ultimatum');
-            bossesDefeated++; // MODIFIED: Tambah hitungan bos yang kalah
+            
+            health += 50;
+            if (health > 100) health = 100;
+            createExplosion(player.x, player.y, 30, '#0f0');
+
+            bossesDefeated++;
             boss = null; isBossLevel = false;
             document.getElementById('bossUIContainer').classList.add('hidden');
             levelUp(); 
@@ -1407,7 +1523,17 @@
             document.getElementById('level').textContent = level;
             document.getElementById('multiplier').textContent = `x${multiplier}`;
             document.getElementById('healthFill').style.width = `${health}%`;
-            document.getElementById('powerFill').style.width = `${power}%`;
+
+            // --- MODIFIED: Update Ultimate Bar ---
+            const ultPercent = (ultimateCharge / ULTIMATE_CHARGE_NEEDED) * 100;
+            const ultFill = document.getElementById('ultimateFill');
+            ultFill.style.width = `${ultPercent}%`;
+            // Add a glow effect when the ultimate is ready
+            if (ultPercent >= 100) {
+                ultFill.style.boxShadow = "0 0 25px #ff8c00";
+            } else {
+                ultFill.style.boxShadow = "0 0 10px #ff8c00";
+            }
             
             if (isBossLevel && boss) {
                 const bossHealthPercent = Math.max(0, (boss.hp / boss.maxHp) * 100);
