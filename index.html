@@ -21,7 +21,7 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
-            color: #0f0;
+            color: rgb(230, 219, 189);
         }
 
         /* Pre-Splash Screen ("Powered by") */
@@ -47,8 +47,8 @@
 
         .powered-by-text {
             font-size: 24px;
-            color: #0f0;
-            text-shadow: 0 0 8px #0f0;
+            color: rgb(255, 255, 255);
+            text-shadow: 0 0 8px rgb(255, 255, 255);
             animation: text-flicker 1s linear infinite; /* Efek kelip aesthetic */
         }
 
@@ -97,8 +97,8 @@
         }
 
         #rialo-logo {
-            width: 80%;
-            max-width: 400px;
+            width: 90%;
+            max-width: 500px;
             opacity: 0;
             transform: scale(0.8);
         }
@@ -183,7 +183,7 @@
             justify-content: space-between;
             padding: 0 20px;
             font-size: 18px;
-            text-shadow: 0 0 5px #0f0;
+            text-shadow: 0 0 5px rgb(0, 0, 0);
         }
         
         /* --- NEW: BOSS UI --- */
@@ -194,20 +194,20 @@
             transform: translateX(-50%);
             width: 60%;
             text-align: center;
-            color: #c000ff; /* Neon Purple */
+            color: #ff0000; /* Neon Purple */
         }
         
         #bossUIContainer p {
             font-size: 18px;
             margin-bottom: 5px;
-            text-shadow: 0 0 8px #c000ff;
+            text-shadow: 0 0 8px #ff0000;
             font-weight: bold;
         }
         
         .bossHealthBar {
             width: 100%;
             height: 20px;
-            border: 2px solid #9400d3;
+            border: 2px solid #ad0000;
             border-radius: 5px;
             overflow: hidden;
             background-color: rgba(50, 0, 80, 0.5);
@@ -216,8 +216,8 @@
         #bossHealthFill {
             width: 100%;
             height: 100%;
-            background: linear-gradient(to right, #6a0dad, #c000ff);
-            box-shadow: 0 0 10px #c000ff;
+            background: linear-gradient(to right, #8d0000bd, #d30707);
+            box-shadow: 0 0 10px #ff0000;
             transition: width 0.3s ease-in-out;
         }
         /* --- END: BOSS UI --- */
@@ -243,13 +243,13 @@
         /* --- MODIFIED FOR ULTIMATE SKILL --- */
         #ultimateContainer {
             right: 150px;
-            color: #ff8c00; /* Orange color for Ultimate */
+            color: #00d9ff; /* Orange color for Ultimate */
         }
 
         .uiBar {
             width: 100%;
             height: 25px;
-            border: 2px solid #555;
+            border: 2px solid #353535;
             border-radius: 5px;
             overflow: hidden;
             background-color: #222;
@@ -266,8 +266,8 @@
         #ultimateFill {
             width: 0%; /* Start empty */
             height: 100%;
-            background: linear-gradient(to right, #e25822, #ff8c00);
-            box-shadow: 0 0 10px #ff8c00;
+            background: linear-gradient(to right, #006168, #00eeff);
+            box-shadow: 0 0 10px #00d9ff;
             transition: width 0.3s;
         }
         /* --- END MODIFICATION --- */
@@ -288,9 +288,9 @@
             bottom: 100px;
             left: 50%;
             transform: translateX(-50%);
-            color: #0f0;
+            color: rgb(145, 255, 0);
             font-size: 16px;
-            text-shadow: 0 0 5px #0f0;
+            text-shadow: 0 0 5px rgb(145, 255, 0);
         }
         
         /* --- NEW MENU: USERNAME --- */
@@ -305,14 +305,15 @@
         }
 
         #game-art {
-            max-width: 350px; /* Adjust size as needed */
-            margin-bottom: 25px;
-        }
+    max-width: 400px; 
+    margin-bottom: 10px;
+}
+
 
         input[type="text"] {
             background-color: rgba(0,0,0,0.5);
-            color: #0f0;
-            border: 2px solid #0f0;
+            color: rgb(255, 255, 255);
+            border: 2px solid rgb(255, 255, 255);
             padding: 10px 15px;
             font-size: 18px;
             border-radius: 5px;
@@ -326,13 +327,13 @@
         }
 
         input[type="text"]::placeholder {
-            color: #0a0;
+            color: rgb(255, 255, 255);
             opacity: 0.7;
         }
 
         input[type="text"]:focus {
             outline: none;
-            box-shadow: 0 0 15px #0f0;
+            box-shadow: 0 0 15px rgb(255, 241, 197);
         }
 
 
@@ -349,8 +350,8 @@
         }
 
         #gameStart {
-            border: 2px solid #0f0;
-            box-shadow: 0 0 20px #0f0;
+            border: 2px solid rgb(255, 245, 210);
+            box-shadow: 0 0 20px rgb(255, 245, 210);
         }
 
         #gameOver {
@@ -359,10 +360,10 @@
         }
 
         h1 {
-            color: #0f0;
+            color: rgb(255, 255, 255);
             margin-bottom: 20px;
             font-size: 36px;
-            text-shadow: 0 0 10px #0f0;
+            text-shadow: 0 0 10px rgb(255, 255, 255);
         }
 
         #gameStart h1:first-of-type {
@@ -374,35 +375,35 @@
         }
 
         .h1-logo {
-            width: 45px;
-            filter: drop-shadow(0 0 10px #0f0);
+            width: 120px;
+            filter: drop-shadow(0 0 30px rgb(255, 255, 255));
             animation: pulse-glow-logo 2s infinite ease-in-out;
         }
         
         @keyframes pulse-glow-logo {
             0%, 100% {
                 transform: scale(1);
-                filter: drop-shadow(0 0 10px #0f0);
+                filter: drop-shadow(0 0 10px rgb(255, 255, 255));
             }
             50% {
                 transform: scale(1.05);
-                filter: drop-shadow(0 0 15px #0f0);
+                filter: drop-shadow(0 0 15px rgb(255, 255, 255));
             }
         }
         
         @keyframes pulse-glow-text {
             0%, 100% {
-                text-shadow: 0 0 10px #0f0;
+                text-shadow: 0 0 10px rgb(255, 255, 255);
             }
             50% {
-                text-shadow: 0 0 15px #0f0, 0 0 5px #fff;
+                text-shadow: 0 0 15px rgb(255, 255, 255), 0 0 5px #fff;
             }
         }
 
         button {
             background-color: #000;
-            color: #0f0;
-            border: 2px solid #0f0;
+            color: rgb(0, 206, 0);
+            border: 2px solid rgb(0, 206, 0);
             padding: 10px 20px;
             font-size: 18px;
             cursor: pointer;
@@ -413,14 +414,58 @@
         }
 
         button:hover {
-            background-color: #0f0;
+            background-color: rgb(0, 255, 0);
             color: #000;
-            box-shadow: 0 0 15px #0f0;
+            box-shadow: 0 0 15px rgb(0, 255, 0);
         }
+        
+        /* --- MODIFIED: ADDED STYLES FOR JET SELECTION --- */
+        #jetSelectionContainer {
+            margin-top: 20px;
+            margin-bottom: 25px;
+        }
+
+        #jetSelectionContainer p {
+            margin-bottom: 15px;
+            font-size: 16px;
+            color: rgb(145, 255, 0);
+            text-shadow: 0 0 8px rgb(145, 255, 0);
+        }
+
+        #jetChoices {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .jet-choice {
+            width: 80px;
+            height: 80px;
+            cursor: pointer;
+            border: 3px solid transparent; /* Mulai dengan border transparan */
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 5px;
+            object-fit: contain; /* Memastikan gambar pas tanpa distorsi */
+        }
+
+        .jet-choice:hover {
+            transform: scale(1.1);
+            border-color: rgb(255, 255, 255);
+        }
+
+        .jet-choice.selected {
+            border-color: rgb(145, 255, 0);
+            box-shadow: 0 0 15px rgb(145, 255, 0);
+            transform: scale(1.15);
+        }
+        /* --- END OF MODIFICATION --- */
 
         #instructions {
             margin-top: 20px;
-            color: #0f0;
+            color: rgb(255, 255, 255);
             font-size: 14px;
             line-height: 1.5;
         }
@@ -449,7 +494,7 @@
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            color: #0f0;
+            color: rgb(255, 255, 255);
             font-family: 'Courier New', monospace;
             font-size: 14px;
             text-decoration: none;
@@ -460,7 +505,7 @@
 
         #poweredByLink:hover {
             opacity: 1;
-            text-shadow: 0 0 8px #0f0;
+            text-shadow: 0 0 8px rgb(145, 255, 0);
         }
 
     </style>
@@ -491,7 +536,7 @@
             </div>
             
             <div id="bossUIContainer" class="hidden">
-                <p>VOID COMMANDER</p>
+                <p>LORD COMMANDER</p>
                 <div class="bossHealthBar">
                     <div id="bossHealthFill"></div>
                 </div>
@@ -522,11 +567,19 @@
 
         <div id="gameStart" class="hidden">
             <h1>
-                <img src="logorlo.png" alt="Rialo Logo" class="h1-logo">
-                RIALO
+                <img src="rialoo.png" alt="Rialo Logo" class="h1-logo">
             </h1>
             <h1>Chain Blaster</h1>
-            <p>Destroy asteroids and enemy ships to earn Rialo tokens!</p>
+            <p>Destroy asteroids and enemy ships to earn RIALO points!</p>
+            
+            <div id="jetSelectionContainer">
+                <p>CHOOSE YOUR RIALO AIRCRAFT</p>
+                <div id="jetChoices">
+                    <img src="jet1.png" alt="Jet 1" class="jet-choice selected" data-src="jet1.png">
+                    <img src="jet2.png" alt="Jet 2" class="jet-choice" data-src="jet2.png">
+                    <img src="jet3.png" alt="Jet 3" class="jet-choice" data-src="jet3.png">
+                </div>
+            </div>
             <button id="startButton">START GAME</button>
             <div id="instructions">
                 <p>CONTROLS:</p>
@@ -541,17 +594,17 @@
         <div id="gameOver" class="hidden">
             <h1>GAME OVER</h1>
             <p>Final Score: <span id="finalScore">0</span></p>
-            <p>Rialo Tokens Earned: <span id="tokensEarned">0</span></p>
+            <p>Rialo Points Earned: <span id="tokensEarned">0</span></p>
             <button id="restartButton">PLAY AGAIN</button>
             <button id="exitButton">EXIT</button>
         </div>
 
         <div id="cryptoReward">
-            Rialo Token Unlocked!
+            Rialo Point Unlocked!
         </div>
     </div>
     
-    <a href="https://www.rialo.io/" target="_blank" id="poweredByLink">Powered by Rialo</a>
+    <a href="https://rialo.io/" target="_blank" id="poweredByLink">Powered by Rialo</a>
 
     <audio id="bgMusic" src="asteroid.mp3" loop></audio>
     <audio id="gameOverSound" src="gameover.mp3"></audio>
@@ -601,7 +654,7 @@
         
         // Muat semua gambar yang dibutuhkan
         const playerImage = new Image();
-        playerImage.src = 'jet.png';
+        playerImage.src = 'jet1.png'; // MODIFIED: Default to jet1.png
 
         const bigAsteroidImage = new Image();
         bigAsteroidImage.src = 'big.png';
@@ -618,9 +671,8 @@
         const bossImage = new Image();
         bossImage.src = 'bos.png';
 
-        // --- NEW: Load Health Boost Image ---
         const heartImage = new Image();
-        heartImage.src = 'heart.png'; // Pastikan Anda punya file 'heart.png'
+        heartImage.src = 'heart.png'; 
 
         const bgMusic = document.getElementById('bgMusic');
         const gameOverSound = document.getElementById('gameOverSound');
@@ -638,8 +690,9 @@
         let isBossLevel = false;
         let boss = null;
         let bossesDefeated = 0;
+        let selectedJetSrc = 'jet1.png'; 
 
-        // --- NEW: Ultimate Skill Variables ---
+        // --- Ultimate Skill Variables ---
         let ultimateCharge = 0;
         const ULTIMATE_CHARGE_NEEDED = 30;
 
@@ -649,7 +702,9 @@
         let particles = [];
         let enemyBullets = [];
         let powerUps = [];
-        let homingBombs = []; // Array for ultimate skill projectiles
+        // --- NEW: ULTIMATE-SPECIFIC ARRAYS ---
+        let homingBombs = []; 
+        let shockwaves = []; 
 
         // --- Player Configuration ---
         const PLAYER_SETTINGS = {
@@ -685,7 +740,6 @@
         function handleKeyDown(e) {
             if (keys.hasOwnProperty(e.key)) keys[e.key] = true;
             if (e.key === ' ') shoot();
-            // --- NEW: Activate Ultimate ---
             if (e.key === 'Shift') activateUltimate();
         }
 
@@ -714,16 +768,27 @@
             document.getElementById('exitButton').addEventListener('click', returnToStartMenu);
             document.addEventListener('keydown', handleKeyDown);
             document.addEventListener('keyup', handleKeyUp);
+
+            const jetChoices = document.querySelectorAll('.jet-choice');
+            jetChoices.forEach(jet => {
+                jet.addEventListener('click', () => {
+                    jetChoices.forEach(j => j.classList.remove('selected'));
+                    jet.classList.add('selected');
+                    selectedJetSrc = jet.dataset.src;
+                });
+            });
         }
 
         // --- Game Start/Reset ---
         function startGame() {
+            playerImage.src = selectedJetSrc;
+            
             gameActive = true;
             score = 0;
             level = 1;
             multiplier = 1;
             health = 100;
-            ultimateCharge = 0; // Reset ultimate
+            ultimateCharge = 0;
             asteroidsDestroyedThisLevel = 0;
             asteroidsNeededForNextLevel = 10;
             isBossLevel = false; 
@@ -746,7 +811,8 @@
             particles = [];
             enemyBullets = [];
             powerUps = [];
-            homingBombs = []; // Reset bombs
+            homingBombs = [];
+            shockwaves = [];
 
             for (let i = 0; i < 5 + level; i++) {
                 createAsteroid();
@@ -783,7 +849,9 @@
             updateBullets(enemyBullets);
             updateParticles();
             updatePowerUps(deltaTime);
-            updateHomingBombs(); // Update ultimate bombs
+            // --- NEW: UPDATE ULTIMATES ---
+            updateHomingBombs();
+            updateShockwaves(deltaTime);
 
             if (isBossLevel) {
                 if (boss) {
@@ -815,7 +883,9 @@
             drawBullets(enemyBullets, '#f55');
             drawParticles();
             drawPowerUps();
-            drawHomingBombs(); // Draw ultimate bombs
+            // --- NEW: DRAW ULTIMATES ---
+            drawHomingBombs();
+            drawShockwaves();
 
             updateUI();
 
@@ -891,7 +961,7 @@
                 bullet.x += Math.cos(bullet.angle) * bullet.speed;
                 bullet.y += Math.sin(bullet.angle) * bullet.speed;
 
-                const shouldWrap = (bulletArray === player.bullets);
+                const shouldWrap = (bulletArray === player.bullets && !bullet.isLaser); // Lasers don't wrap
                 if (shouldWrap) {
                     if (bullet.x < 0) bullet.x = canvas.width;
                     if (bullet.x > canvas.width) bullet.x = 0;
@@ -996,7 +1066,7 @@
             }
         }
         
-        // --- MODIFIED: Update Homing Fireballs ---
+        // --- NEW/MODIFIED: ULTIMATE UPDATE FUNCTIONS ---
         function updateHomingBombs() {
             for (let i = homingBombs.length - 1; i >= 0; i--) {
                 const bomb = homingBombs[i];
@@ -1020,7 +1090,6 @@
                 bomb.x += Math.cos(bomb.angle) * bomb.speed;
                 bomb.y += Math.sin(bomb.angle) * bomb.speed;
 
-                // Emit fire particles for a trail effect
                 if (Math.random() < 0.6) {
                     particles.push({
                         x: bomb.x, y: bomb.y,
@@ -1032,6 +1101,23 @@
                 }
             }
         }
+
+        function updateShockwaves(deltaTime) {
+            for (let i = shockwaves.length - 1; i >= 0; i--) {
+                const sw = shockwaves[i];
+                sw.radius += sw.speed * deltaTime;
+                sw.life -= deltaTime;
+                
+                // Fade effect
+                if (sw.life < 0.5) {
+                    sw.alpha = sw.life * 2;
+                }
+
+                if (sw.radius > sw.maxRadius || sw.life <= 0) {
+                    shockwaves.splice(i, 1);
+                }
+            }
+        }
         
         function checkCollisions() {
             // Player bullet collisions
@@ -1040,8 +1126,8 @@
                 let bulletRemoved = false;
 
                 if (isBossLevel && boss && isColliding(bullet, boss)) {
-                    boss.hp -= 10;
-                    createExplosion(bullet.x, bullet.y, 10, '#c000ff');
+                    boss.hp -= (bullet.isLaser ? 20 : 10); // Lasers do more damage
+                    createExplosion(bullet.x, bullet.y, 10, '#51ff00');
                     player.bullets.splice(i, 1);
                     bulletRemoved = true;
                     if (boss.hp <= 0) {
@@ -1098,11 +1184,10 @@
                 }
             }
             
-            // --- MODIFIED: Homing fireball collisions ---
+            // --- NEW/MODIFIED: ULTIMATE COLLISION CHECKS ---
+            // Homing fireball collisions
             for (let i = homingBombs.length - 1; i >= 0; i--) {
                 const bomb = homingBombs[i];
-                let bombHit = false;
-
                 if (bomb.target && isColliding(bomb, bomb.target)) {
                     createExplosion(bomb.x, bomb.y, 50, '#ff8c00'); // Big orange explosion
                     
@@ -1125,9 +1210,41 @@
                     }
 
                     homingBombs.splice(i, 1);
-                    bombHit = true;
                 }
             }
+
+            // Shockwave collisions
+            for (const sw of shockwaves) {
+                 for (let i = asteroids.length - 1; i >= 0; i--) {
+                    const asteroid = asteroids[i];
+                    const dist = Math.hypot(sw.x - asteroid.x, sw.y - asteroid.y);
+                    // Check if the asteroid is within the shockwave's destructive path
+                    if (dist < sw.radius + asteroid.size && dist > sw.radius - sw.lineWidth) {
+                        createExplosion(asteroid.x, asteroid.y, asteroid.size, '#0ff');
+                        asteroids.splice(i, 1);
+                        score += 100 * multiplier;
+                        asteroidsDestroyedThisLevel++;
+                    }
+                }
+                for (let i = enemyShips.length - 1; i >= 0; i--) {
+                    const enemy = enemyShips[i];
+                     const dist = Math.hypot(sw.x - enemy.x, sw.y - enemy.y);
+                    if (dist < sw.radius + enemy.size && dist > sw.radius - sw.lineWidth) {
+                        createExplosion(enemy.x, enemy.y, enemy.size, '#0ff');
+                        enemyShips.splice(i, 1);
+                        score += 250 * multiplier;
+                    }
+                }
+                 if (isBossLevel && boss) {
+                    const dist = Math.hypot(sw.x - boss.x, sw.y - boss.y);
+                    if (dist < sw.radius + boss.size && dist > sw.radius - sw.lineWidth && !sw.bossHit) {
+                        boss.hp -= 150;
+                        sw.bossHit = true; // Prevent hitting multiple times
+                        if (boss.hp <= 0) defeatBoss();
+                    }
+                }
+            }
+
 
             // Player collision with environment/enemies
             if (!player.isInvincible) {
@@ -1325,8 +1442,8 @@
             ctx.save();
             ctx.translate(boss.x, boss.y);
             ctx.rotate(boss.angle + Math.PI / 2);
-            const bossWidth = boss.size * 5; const bossHeight = boss.size * 5;
-            ctx.shadowColor = '#c000ff'; ctx.shadowBlur = 20;
+            const bossWidth = boss.size * 6; const bossHeight = boss.size * 6;
+            ctx.shadowColor = '#ff0000'; ctx.shadowBlur = 20;
             ctx.drawImage(bossImage, -bossWidth / 2, -bossHeight / 2, bossWidth, bossHeight);
             ctx.restore();
         }
@@ -1336,19 +1453,18 @@
                 ctx.save();
                 if (bullet.isBossBullet) {
                     const glowColor = '#ff4500';
-                    ctx.fillStyle = glowColor;
-                    ctx.shadowBlur = 25;
-                    ctx.shadowColor = glowColor;
-                    ctx.beginPath();
-                    ctx.arc(bullet.x, bullet.y, bullet.size, 0, Math.PI * 2);
-                    ctx.fill();
-                } else {
-                    ctx.fillStyle = defaultColor;
-                    ctx.shadowBlur = 8;
-                    ctx.shadowColor = defaultColor;
-                    ctx.beginPath();
-                    ctx.arc(bullet.x, bullet.y, 3, 0, Math.PI * 2);
-                    ctx.fill();
+                    ctx.fillStyle = glowColor; ctx.shadowBlur = 25; ctx.shadowColor = glowColor;
+                    ctx.beginPath(); ctx.arc(bullet.x, bullet.y, bullet.size, 0, Math.PI * 2); ctx.fill();
+                } else if (bullet.isLaser) { // --- NEW: DRAW LASER ULTIMATE ---
+                    const laserColor = '#f0f'; // Bright magenta
+                    ctx.translate(bullet.x, bullet.y);
+                    ctx.rotate(bullet.angle);
+                    ctx.fillStyle = laserColor; ctx.shadowBlur = 15; ctx.shadowColor = laserColor;
+                    ctx.fillRect(0, -2, 25, 4); // Draw a thin rectangle for the laser
+                }
+                else {
+                    ctx.fillStyle = defaultColor; ctx.shadowBlur = 8; ctx.shadowColor = defaultColor;
+                    ctx.beginPath(); ctx.arc(bullet.x, bullet.y, 3, 0, Math.PI * 2); ctx.fill();
                 }
                 ctx.restore();
             });
@@ -1363,20 +1479,35 @@
             });
         }
 
-        // --- MODIFIED: Draw Homing Fireballs ---
+        // --- NEW/MODIFIED: ULTIMATE DRAWING FUNCTIONS ---
         function drawHomingBombs() {
             homingBombs.forEach(bomb => {
                 ctx.save();
                 ctx.fillStyle = '#ff4500'; // OrangeRed
                 ctx.shadowBlur = 20;
                 ctx.shadowColor = '#ffcc00'; // Yellowish glow
-                
                 ctx.beginPath();
                 ctx.arc(bomb.x, bomb.y, bomb.size, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.restore();
             });
         }
+
+        function drawShockwaves() {
+             shockwaves.forEach(sw => {
+                ctx.save();
+                ctx.globalAlpha = sw.alpha;
+                ctx.strokeStyle = '#00ffff';
+                ctx.lineWidth = sw.lineWidth;
+                ctx.shadowBlur = 25;
+                ctx.shadowColor = '#00ffff';
+                ctx.beginPath();
+                ctx.arc(sw.x, sw.y, sw.radius, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.restore();
+            });
+        }
+
 
         // --- Game Logic Functions ---
         function shoot() {
@@ -1410,34 +1541,66 @@
             enemyShips = [];
         }
         
-        // --- MODIFIED: Activate Ultimate Skill ---
+        // --- NEW/REFACTORED: ULTIMATE ABILITIES ---
         function activateUltimate() {
             if (ultimateCharge < ULTIMATE_CHARGE_NEEDED || !gameActive) return;
 
-            let targets = [...asteroids, ...enemyShips];
-            if (isBossLevel && boss) {
-                targets.push(boss);
+            // Call the correct ultimate based on selected jet
+            switch (selectedJetSrc) {
+                case 'jet1.png':
+                    activateHomingFireballsUltimate();
+                    break;
+                case 'jet2.png':
+                    activateShockwaveUltimate();
+                    break;
+                case 'jet3.png':
+                    activateCircularLaserUltimate();
+                    break;
+                default:
+                    activateHomingFireballsUltimate(); // Fallback
             }
-            if (targets.length === 0) return;
-
-            // Fire exactly 6 fireballs
-            for (let i = 0; i < 6; i++) {
-                // Assign a target to each fireball, cycling through the target list
-                const target = targets[i % targets.length];
-                homingBombs.push({
-                    x: player.x,
-                    y: player.y,
-                    target: target,
-                    speed: 7, // A bit faster
-                    turnSpeed: 0.08,
-                    angle: player.angle + (Math.random() - 0.5), // Slight random spread
-                    size: 7
-                });
-            }
-            
-            createExplosion(player.x, player.y, 40, '#ff8c00'); // Fiery activation explosion
             
             ultimateCharge = 0;
+        }
+
+        function activateHomingFireballsUltimate() {
+            let targets = [...asteroids, ...enemyShips];
+            if (isBossLevel && boss) targets.push(boss);
+            if (targets.length === 0) return;
+
+            createExplosion(player.x, player.y, 40, '#ff8c00'); // Fiery activation explosion
+
+            for (let i = 0; i < 6; i++) {
+                const target = targets[i % targets.length];
+                homingBombs.push({
+                    x: player.x, y: player.y, target: target,
+                    speed: 7, turnSpeed: 0.08,
+                    angle: player.angle + (Math.random() - 0.5), size: 7
+                });
+            }
+        }
+
+        function activateShockwaveUltimate() {
+            createExplosion(player.x, player.y, 50, '#00ffff'); // Cyan activation explosion
+            shockwaves.push({
+                x: player.x, y: player.y,
+                radius: 10, maxRadius: canvas.width / 1.5,
+                speed: 400, life: 1.5, lineWidth: 20, alpha: 1,
+                bossHit: false // Flag to ensure boss is only hit once
+            });
+        }
+
+        function activateCircularLaserUltimate() {
+            createExplosion(player.x, player.y, 40, '#ff00ff'); // Magenta activation explosion
+            const numLasers = 36; // Fire in all directions
+            for (let i = 0; i < numLasers; i++) {
+                player.bullets.push({
+                    x: player.x, y: player.y,
+                    angle: (i / numLasers) * Math.PI * 2,
+                    speed: 8, createdAt: Date.now(),
+                    isLaser: true // Custom flag for drawing and damage
+                });
+            }
         }
 
         function activatePowerUp(type) {
@@ -1524,11 +1687,10 @@
             document.getElementById('multiplier').textContent = `x${multiplier}`;
             document.getElementById('healthFill').style.width = `${health}%`;
 
-            // --- MODIFIED: Update Ultimate Bar ---
             const ultPercent = (ultimateCharge / ULTIMATE_CHARGE_NEEDED) * 100;
             const ultFill = document.getElementById('ultimateFill');
             ultFill.style.width = `${ultPercent}%`;
-            // Add a glow effect when the ultimate is ready
+            
             if (ultPercent >= 100) {
                 ultFill.style.boxShadow = "0 0 25px #ff8c00";
             } else {
